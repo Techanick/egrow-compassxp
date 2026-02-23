@@ -41,6 +41,19 @@ type TranslationKeys = {
   almostAlways: string;
   submitAssessment: string;
   assessmentHistory: string;
+  assessmentIntro: string;
+  skillProgress: string;
+  rateEachBehavior: string;
+  levelValidated: string;
+  levelNotValidated: string;
+  validationRule: string;
+  assessmentResults: string;
+  yourMasteryLevels: string;
+  validatedLevel: string;
+  notYetValidated: string;
+  restartAssessment: string;
+  behaviorRated: string;
+  of: string;
   // Dev Plan
   recommendedSkills: string;
   targetLevel: string;
@@ -87,6 +100,19 @@ const translations: Record<Language, TranslationKeys> = {
     almostAlways: 'Almost always',
     submitAssessment: 'Submit Assessment',
     assessmentHistory: 'Assessment History',
+    assessmentIntro: 'Rate how frequently you demonstrate each behavior. Your mastery levels will be calculated automatically.',
+    skillProgress: 'Skill',
+    rateEachBehavior: 'Rate each behavior below',
+    levelValidated: 'Level validated',
+    levelNotValidated: 'Not yet validated',
+    validationRule: 'A level is validated when at least 3 behaviors are rated "Often" or "Almost always"',
+    assessmentResults: 'Assessment Results',
+    yourMasteryLevels: 'Your Mastery Levels',
+    validatedLevel: 'Validated',
+    notYetValidated: 'Not validated',
+    restartAssessment: 'Start New Assessment',
+    behaviorRated: 'behaviors rated',
+    of: 'of',
     recommendedSkills: 'Recommended Skills',
     targetLevel: 'Target Level',
     addAction: 'Add Action',
@@ -129,6 +155,19 @@ const translations: Record<Language, TranslationKeys> = {
     almostAlways: 'Presque toujours',
     submitAssessment: "Soumettre l'évaluation",
     assessmentHistory: 'Historique des évaluations',
+    assessmentIntro: 'Évaluez la fréquence à laquelle vous démontrez chaque comportement. Vos niveaux de maîtrise seront calculés automatiquement.',
+    skillProgress: 'Compétence',
+    rateEachBehavior: 'Évaluez chaque comportement ci-dessous',
+    levelValidated: 'Niveau validé',
+    levelNotValidated: 'Pas encore validé',
+    validationRule: 'Un niveau est validé quand au moins 3 comportements sont notés "Souvent" ou "Presque toujours"',
+    assessmentResults: 'Résultats de l\'évaluation',
+    yourMasteryLevels: 'Vos niveaux de maîtrise',
+    validatedLevel: 'Validé',
+    notYetValidated: 'Non validé',
+    restartAssessment: 'Nouvelle évaluation',
+    behaviorRated: 'comportements évalués',
+    of: 'sur',
     recommendedSkills: 'Compétences recommandées',
     targetLevel: 'Niveau cible',
     addAction: 'Ajouter une action',
@@ -171,6 +210,19 @@ const translations: Record<Language, TranslationKeys> = {
     almostAlways: 'Casi siempre',
     submitAssessment: 'Enviar evaluación',
     assessmentHistory: 'Historial de evaluaciones',
+    assessmentIntro: 'Evalúe con qué frecuencia demuestra cada comportamiento. Sus niveles de dominio se calcularán automáticamente.',
+    skillProgress: 'Competencia',
+    rateEachBehavior: 'Evalúe cada comportamiento a continuación',
+    levelValidated: 'Nivel validado',
+    levelNotValidated: 'Aún no validado',
+    validationRule: 'Un nivel se valida cuando al menos 3 comportamientos se califican como "A menudo" o "Casi siempre"',
+    assessmentResults: 'Resultados de la evaluación',
+    yourMasteryLevels: 'Sus niveles de dominio',
+    validatedLevel: 'Validado',
+    notYetValidated: 'No validado',
+    restartAssessment: 'Nueva evaluación',
+    behaviorRated: 'comportamientos evaluados',
+    of: 'de',
     recommendedSkills: 'Competencias recomendadas',
     targetLevel: 'Nivel objetivo',
     addAction: 'Añadir acción',
@@ -213,6 +265,19 @@ const translations: Record<Language, TranslationKeys> = {
     almostAlways: 'Neredeyse her zaman',
     submitAssessment: 'Değerlendirmeyi gönder',
     assessmentHistory: 'Değerlendirme Geçmişi',
+    assessmentIntro: 'Her bir davranışı ne sıklıkla sergilediğinizi değerlendirin. Ustalık seviyeleriniz otomatik olarak hesaplanacaktır.',
+    skillProgress: 'Yetkinlik',
+    rateEachBehavior: 'Aşağıdaki her davranışı değerlendirin',
+    levelValidated: 'Seviye onaylandı',
+    levelNotValidated: 'Henüz onaylanmadı',
+    validationRule: 'Bir seviye, en az 3 davranış "Sıklıkla" veya "Neredeyse her zaman" olarak derecelendirildiğinde onaylanır',
+    assessmentResults: 'Değerlendirme Sonuçları',
+    yourMasteryLevels: 'Ustalık Seviyeleriniz',
+    validatedLevel: 'Onaylandı',
+    notYetValidated: 'Onaylanmadı',
+    restartAssessment: 'Yeni değerlendirme',
+    behaviorRated: 'davranış değerlendirildi',
+    of: '/',
     recommendedSkills: 'Önerilen yetkinlikler',
     targetLevel: 'Hedef seviye',
     addAction: 'Eylem ekle',
@@ -255,6 +320,19 @@ const translations: Record<Language, TranslationKeys> = {
     almostAlways: '几乎总是',
     submitAssessment: '提交评估',
     assessmentHistory: '评估历史',
+    assessmentIntro: '评估您展示每个行为的频率。您的精通等级将自动计算。',
+    skillProgress: '技能',
+    rateEachBehavior: '请评估以下每个行为',
+    levelValidated: '等级已验证',
+    levelNotValidated: '尚未验证',
+    validationRule: '当至少3个行为被评为"经常"或"几乎总是"时，该等级即被验证',
+    assessmentResults: '评估结果',
+    yourMasteryLevels: '您的精通等级',
+    validatedLevel: '已验证',
+    notYetValidated: '未验证',
+    restartAssessment: '开始新评估',
+    behaviorRated: '个行为已评估',
+    of: '/',
     recommendedSkills: '推荐技能',
     targetLevel: '目标等级',
     addAction: '添加行动',
