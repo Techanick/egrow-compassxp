@@ -61,6 +61,28 @@ type TranslationKeys = {
   actionPlan: string;
   inProgress: string;
   completed: string;
+  selectSkillsToFocus: string;
+  gapAnalysis: string;
+  currentLevel: string;
+  noAssessmentYet: string;
+  completeAssessmentFirst: string;
+  goToAssessment: string;
+  addActionItem: string;
+  actionDescription: string;
+  deadline: string;
+  markComplete: string;
+  markInProgress: string;
+  removeAction: string;
+  noActionsYet: string;
+  addFirstAction: string;
+  progressOverview: string;
+  focusSkills: string;
+  selectUpTo: string;
+  buildPlan: string;
+  editSelection: string;
+  todo: string;
+  suggestedTools: string;
+  behaviorToWorkOn: string;
   // General
   save: string;
   cancel: string;
@@ -119,6 +141,28 @@ const translations: Record<Language, TranslationKeys> = {
     actionPlan: 'Action Plan',
     inProgress: 'In Progress',
     completed: 'Completed',
+    selectSkillsToFocus: 'Select skills to focus on',
+    gapAnalysis: 'Gap Analysis',
+    currentLevel: 'Current level',
+    noAssessmentYet: 'No assessment yet',
+    completeAssessmentFirst: 'Complete a self-assessment first to identify your skill gaps and build a targeted development plan.',
+    goToAssessment: 'Go to Self-Assessment',
+    addActionItem: 'Add action',
+    actionDescription: 'Describe the action...',
+    deadline: 'Deadline',
+    markComplete: 'Mark complete',
+    markInProgress: 'Mark in progress',
+    removeAction: 'Remove',
+    noActionsYet: 'No actions yet',
+    addFirstAction: 'Add your first action',
+    progressOverview: 'Overall progress',
+    focusSkills: 'Focus Skills',
+    selectUpTo: 'Select up to 2 skills to focus on based on your assessment gaps.',
+    buildPlan: 'Build Plan',
+    editSelection: 'Edit Selection',
+    todo: 'To do',
+    suggestedTools: 'Suggested Development Tools',
+    behaviorToWorkOn: 'Behaviors to work on',
     save: 'Save',
     cancel: 'Cancel',
     back: 'Back',
@@ -174,6 +218,28 @@ const translations: Record<Language, TranslationKeys> = {
     actionPlan: "Plan d'action",
     inProgress: 'En cours',
     completed: 'Terminé',
+    selectSkillsToFocus: 'Sélectionnez les compétences à développer',
+    gapAnalysis: 'Analyse des écarts',
+    currentLevel: 'Niveau actuel',
+    noAssessmentYet: 'Pas encore d\'évaluation',
+    completeAssessmentFirst: 'Complétez d\'abord une auto-évaluation pour identifier vos lacunes et construire un plan de développement ciblé.',
+    goToAssessment: 'Aller à l\'auto-évaluation',
+    addActionItem: 'Ajouter une action',
+    actionDescription: 'Décrivez l\'action...',
+    deadline: 'Échéance',
+    markComplete: 'Marquer terminé',
+    markInProgress: 'Marquer en cours',
+    removeAction: 'Supprimer',
+    noActionsYet: 'Aucune action pour le moment',
+    addFirstAction: 'Ajoutez votre première action',
+    progressOverview: 'Progression globale',
+    focusSkills: 'Compétences ciblées',
+    selectUpTo: 'Sélectionnez jusqu\'à 2 compétences à développer en priorité.',
+    buildPlan: 'Créer le plan',
+    editSelection: 'Modifier la sélection',
+    todo: 'À faire',
+    suggestedTools: 'Outils de développement suggérés',
+    behaviorToWorkOn: 'Comportements à travailler',
     save: 'Enregistrer',
     cancel: 'Annuler',
     back: 'Retour',
@@ -229,6 +295,28 @@ const translations: Record<Language, TranslationKeys> = {
     actionPlan: 'Plan de acción',
     inProgress: 'En progreso',
     completed: 'Completado',
+    selectSkillsToFocus: 'Seleccione competencias a desarrollar',
+    gapAnalysis: 'Análisis de brechas',
+    currentLevel: 'Nivel actual',
+    noAssessmentYet: 'Sin evaluación aún',
+    completeAssessmentFirst: 'Complete primero una autoevaluación para identificar sus brechas y crear un plan de desarrollo dirigido.',
+    goToAssessment: 'Ir a la autoevaluación',
+    addActionItem: 'Añadir acción',
+    actionDescription: 'Describa la acción...',
+    deadline: 'Fecha límite',
+    markComplete: 'Marcar completado',
+    markInProgress: 'Marcar en progreso',
+    removeAction: 'Eliminar',
+    noActionsYet: 'Sin acciones aún',
+    addFirstAction: 'Añada su primera acción',
+    progressOverview: 'Progreso general',
+    focusSkills: 'Competencias prioritarias',
+    selectUpTo: 'Seleccione hasta 2 competencias a desarrollar según sus brechas.',
+    buildPlan: 'Crear plan',
+    editSelection: 'Editar selección',
+    todo: 'Pendiente',
+    suggestedTools: 'Herramientas de desarrollo sugeridas',
+    behaviorToWorkOn: 'Comportamientos a trabajar',
     save: 'Guardar',
     cancel: 'Cancelar',
     back: 'Atrás',
@@ -284,6 +372,28 @@ const translations: Record<Language, TranslationKeys> = {
     actionPlan: 'Eylem planı',
     inProgress: 'Devam ediyor',
     completed: 'Tamamlandı',
+    selectSkillsToFocus: 'Odaklanılacak yetkinlikleri seçin',
+    gapAnalysis: 'Boşluk Analizi',
+    currentLevel: 'Mevcut seviye',
+    noAssessmentYet: 'Henüz değerlendirme yok',
+    completeAssessmentFirst: 'Beceri boşluklarınızı belirlemek ve hedefli bir gelişim planı oluşturmak için önce bir öz değerlendirme yapın.',
+    goToAssessment: 'Öz Değerlendirmeye Git',
+    addActionItem: 'Eylem ekle',
+    actionDescription: 'Eylemi tanımlayın...',
+    deadline: 'Son tarih',
+    markComplete: 'Tamamlandı olarak işaretle',
+    markInProgress: 'Devam ediyor olarak işaretle',
+    removeAction: 'Kaldır',
+    noActionsYet: 'Henüz eylem yok',
+    addFirstAction: 'İlk eyleminizi ekleyin',
+    progressOverview: 'Genel ilerleme',
+    focusSkills: 'Odak Yetkinlikleri',
+    selectUpTo: 'Değerlendirme sonuçlarınıza göre en fazla 2 yetkinlik seçin.',
+    buildPlan: 'Plan Oluştur',
+    editSelection: 'Seçimi Düzenle',
+    todo: 'Yapılacak',
+    suggestedTools: 'Önerilen Gelişim Araçları',
+    behaviorToWorkOn: 'Üzerinde çalışılacak davranışlar',
     save: 'Kaydet',
     cancel: 'İptal',
     back: 'Geri',
@@ -339,6 +449,28 @@ const translations: Record<Language, TranslationKeys> = {
     actionPlan: '行动计划',
     inProgress: '进行中',
     completed: '已完成',
+    selectSkillsToFocus: '选择要重点发展的技能',
+    gapAnalysis: '差距分析',
+    currentLevel: '当前等级',
+    noAssessmentYet: '尚无评估',
+    completeAssessmentFirst: '请先完成自我评估，以确定技能差距并制定有针对性的发展计划。',
+    goToAssessment: '前往自我评估',
+    addActionItem: '添加行动',
+    actionDescription: '描述行动...',
+    deadline: '截止日期',
+    markComplete: '标记完成',
+    markInProgress: '标记进行中',
+    removeAction: '删除',
+    noActionsYet: '暂无行动',
+    addFirstAction: '添加您的第一个行动',
+    progressOverview: '总体进度',
+    focusSkills: '重点技能',
+    selectUpTo: '根据评估差距选择最多2项技能进行重点发展。',
+    buildPlan: '创建计划',
+    editSelection: '编辑选择',
+    todo: '待办',
+    suggestedTools: '推荐发展工具',
+    behaviorToWorkOn: '需要改进的行为',
     save: '保存',
     cancel: '取消',
     back: '返回',

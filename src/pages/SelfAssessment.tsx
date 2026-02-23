@@ -39,7 +39,11 @@ const SelfAssessment = () => {
   ];
 
   const handleRate = useCallback((behaviorId: string, value: Rating) => {
-    setRatings(prev => ({ ...prev, [behaviorId]: value }));
+    setRatings(prev => {
+      const next = { ...prev, [behaviorId]: value };
+      sessionStorage.setItem('assessment_ratings', JSON.stringify(next));
+      return next;
+    });
   }, []);
 
   const getLevelValidation = useCallback((skill: typeof currentSkill, level: MasteryLevel) => {
