@@ -16,8 +16,9 @@ import {
 } from '@/components/ui/table';
 import {
   Users, TrendingUp, AlertTriangle, CheckCircle2, Clock, Eye,
-  BarChart3, UserCheck, Plus, Loader2, Trash2, Download, CalendarIcon, X, ChevronDown, ChevronRight, Building2, Globe,
+  BarChart3, UserCheck, Plus, Loader2, Trash2, Download, CalendarIcon, X, ChevronDown, ChevronRight, Building2, Globe, Settings2,
 } from 'lucide-react';
+
 import {
   RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar,
   ResponsiveContainer, Tooltip,
@@ -36,6 +37,7 @@ import { cn } from '@/lib/utils';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ManageMemberDialog } from '@/components/ManageMemberDialog';
 
 const MASTERY_LEVELS: MasteryLevel[] = ['fundamentals', 'intermediate', 'advanced', 'referent'];
 const LEVEL_NUMERIC: Record<MasteryLevel | 'none', number> = {
@@ -84,6 +86,7 @@ const Team = () => {
   const [expandedSkillId, setExpandedSkillId] = useState<string | null>(null);
   const [filterDepartment, setFilterDepartment] = useState<string>('all');
   const [filterGeography, setFilterGeography] = useState<string>('all');
+  const [manageMember, setManageMember] = useState<TeamMemberData | null>(null);
 
   const validateEmail = (email: string) => {
     if (!email.trim()) return '';
@@ -598,6 +601,11 @@ const Team = () => {
                                 <Button variant="ghost" size="icon" onClick={() => setSelectedMember(member)}>
                                   <Eye className="h-4 w-4" />
                                 </Button>
+                                {isHR && (
+                                  <Button variant="ghost" size="icon" onClick={() => setManageMember(member)}>
+                                    <Settings2 className="h-4 w-4" />
+                                  </Button>
+                                )}
                                 <Button
                                   variant="ghost"
                                   size="icon"
@@ -984,6 +992,19 @@ const Team = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* HR Manage Member Dialog */}
+      {manageMember && (
+        <ManageMemberDialog
+          open={!!manageMember}
+          onOpenChange={(open) => { if (!open) setManageMember(null); }}
+          memberId={manageMember.id}
+          memberName={manageMember.name}
+          currentDepartment={manageMember.department}
+          currentGeography={manageMember.geography}
+          onSaved={refresh}
+        />
+      )}
     </div>
   );
 };
