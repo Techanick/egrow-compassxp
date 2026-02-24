@@ -13,6 +13,7 @@ import SelfAssessment from "./pages/SelfAssessment";
 import DevelopmentPlan from "./pages/DevelopmentPlan";
 import Team from "./pages/Team";
 import Auth from "./pages/Auth";
+import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -27,6 +28,7 @@ const App = () => (
           <BrowserRouter>
             <Routes>
               <Route path="/auth" element={<Auth />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               <Route
                 path="/*"
                 element={
