@@ -542,11 +542,26 @@ const Team = () => {
                                   <AvatarFallback className="text-xs bg-primary/10 text-primary">{member.initials}</AvatarFallback>
                                 </Avatar>
                                 <div>
-                                  <p className="font-medium text-sm">{member.name}</p>
+                                  <div className="flex items-center gap-1.5">
+                                    <p className="font-medium text-sm">{member.name}</p>
+                                    {isHR && member.roles.map(role => (
+                                      <Badge
+                                        key={role}
+                                        variant="outline"
+                                        className={cn("text-[10px] px-1.5 py-0 h-4 uppercase tracking-wider font-semibold", {
+                                          'border-primary/40 text-primary': role === 'manager',
+                                          'border-secondary/40 text-secondary': role === 'hr',
+                                          'border-accent/60 text-accent-foreground': role === 'admin',
+                                        })}
+                                      >
+                                        {role === 'hr' ? 'HR' : role}
+                                      </Badge>
+                                    ))}
+                                  </div>
                                   <p className="text-xs text-muted-foreground">
-                                    {member.role}
-                                    {member.department && ` · ${getDepartmentLabel(member.department, language)}`}
-                                    {member.geography && ` · ${getGeoZoneLabel(member.geography, language)}`}
+                                    {member.department && getDepartmentLabel(member.department, language)}
+                                    {member.department && member.geography && ' · '}
+                                    {member.geography && getGeoZoneLabel(member.geography, language)}
                                   </p>
                                 </div>
                               </div>
