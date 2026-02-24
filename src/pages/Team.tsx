@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { useLanguage } from '@/i18n/LanguageContext';
-import { skills, masteryLevelColors, masteryLevelTextColors, MasteryLevel } from '@/data/frameworkData';
+import { useAuth } from '@/hooks/useAuth';
+import { useTeamData, TeamMemberData } from '@/hooks/useTeamData';
+import { supabase } from '@/integrations/supabase/client';
+import { skills, masteryLevelColors, MasteryLevel } from '@/data/frameworkData';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -11,72 +14,25 @@ import {
 } from '@/components/ui/table';
 import {
   Users, TrendingUp, AlertTriangle, CheckCircle2, Clock, Eye,
-  BarChart3, UserCheck,
+  BarChart3, UserCheck, Plus, Loader2, Trash2,
 } from 'lucide-react';
 import {
   RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar,
   ResponsiveContainer, Tooltip,
 } from 'recharts';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog';
+import { toast } from '@/hooks/use-toast';
 
 const MASTERY_LEVELS: MasteryLevel[] = ['fundamentals', 'intermediate', 'advanced', 'referent'];
 const LEVEL_NUMERIC: Record<MasteryLevel | 'none', number> = {
   none: 0, fundamentals: 1, intermediate: 2, advanced: 3, referent: 4,
 };
 
-interface MockMember {
-  id: string;
-  name: string;
-  initials: string;
-  role: string;
-  assessmentDate: string | null;
-  skillLevels: Record<string, MasteryLevel | null>;
-  focusSkills: string[];
-  actions: { total: number; completed: number; inProgress: number };
-}
-
-const mockTeam: MockMember[] = [
-  {
-    id: '1', name: 'Marie Dupont', initials: 'MD', role: 'Regional Manager',
-    assessmentDate: '2026-01-15',
-    skillLevels: { meaning: 'intermediate', engagement: 'advanced', feedback: 'intermediate', active_listening: 'fundamentals', objectives: 'advanced', decision_making: 'intermediate' },
-    focusSkills: ['active_listening', 'meaning'],
-    actions: { total: 6, completed: 3, inProgress: 2 },
-  },
-  {
-    id: '2', name: 'Thomas Martin', initials: 'TM', role: 'Product Lead',
-    assessmentDate: '2026-02-03',
-    skillLevels: { meaning: 'advanced', engagement: 'intermediate', feedback: 'advanced', active_listening: 'intermediate', objectives: 'referent', decision_making: 'advanced' },
-    focusSkills: ['engagement'],
-    actions: { total: 4, completed: 4, inProgress: 0 },
-  },
-  {
-    id: '3', name: 'Sophie Chen', initials: 'SC', role: 'Operations Manager',
-    assessmentDate: '2025-11-20',
-    skillLevels: { meaning: 'fundamentals', engagement: 'fundamentals', feedback: 'intermediate', active_listening: 'advanced', objectives: 'intermediate', decision_making: 'fundamentals' },
-    focusSkills: ['meaning', 'decision_making'],
-    actions: { total: 8, completed: 2, inProgress: 3 },
-  },
-  {
-    id: '4', name: 'Kemal Yılmaz', initials: 'KY', role: 'Sales Manager',
-    assessmentDate: null,
-    skillLevels: { meaning: null, engagement: null, feedback: null, active_listening: null, objectives: null, decision_making: null },
-    focusSkills: [],
-    actions: { total: 0, completed: 0, inProgress: 0 },
-  },
-  {
-    id: '5', name: 'Laura García', initials: 'LG', role: 'HR Business Partner',
-    assessmentDate: '2026-02-10',
-    skillLevels: { meaning: 'intermediate', engagement: 'referent', feedback: 'advanced', active_listening: 'referent', objectives: 'intermediate', decision_making: 'intermediate' },
-    focusSkills: ['objectives', 'meaning'],
-    actions: { total: 5, completed: 1, inProgress: 4 },
-  },
-];
-
-function getDevStatus(m: MockMember): 'onTrack' | 'needsAttention' | 'notStarted' {
+function getDevStatus(m: TeamMemberData): 'onTrack' | 'needsAttention' | 'notStarted' {
   if (!m.assessmentDate) return 'notStarted';
   if (m.actions.total === 0) return 'needsAttention';
   const pct = (m.actions.completed + m.actions.inProgress) / m.actions.total;
@@ -89,18 +45,18 @@ const statusConfig = {
   notStarted: { icon: Clock, className: 'bg-muted text-muted-foreground' },
 };
 
-function highestLevel(levels: Record<string, MasteryLevel | null>, skillId: string): MasteryLevel | null {
-  return levels[skillId] ?? null;
-}
-
 const Team = () => {
   const { t, language } = useLanguage();
-  const [selectedMember, setSelectedMember] = useState<MockMember | null>(null);
-
-  const [comparedMember, setComparedMember] = useState<MockMember | null>(null);
+  const { user } = useAuth();
+  const { members, loading } = useTeamData();
+  const [selectedMember, setSelectedMember] = useState<TeamMemberData | null>(null);
+  const [comparedMember, setComparedMember] = useState<TeamMemberData | null>(null);
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [addEmail, setAddEmail] = useState('');
+  const [addLoading, setAddLoading] = useState(false);
 
   // Team-level aggregation
-  const assessedMembers = mockTeam.filter(m => m.assessmentDate);
+  const assessedMembers = members.filter(m => m.assessmentDate);
   const skillAverages = skills.map(skill => {
     const values = assessedMembers.map(m => LEVEL_NUMERIC[m.skillLevels[skill.id] ?? 'none']).filter(v => v > 0);
     const avg = values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : 0;
@@ -109,349 +65,436 @@ const Team = () => {
   const strongest = [...skillAverages].sort((a, b) => b.avg - a.avg)[0];
   const weakest = [...skillAverages].sort((a, b) => a.avg - b.avg)[0];
 
-  const totalActions = mockTeam.reduce((s, m) => s + m.actions.total, 0);
-  const completedActions = mockTeam.reduce((s, m) => s + m.actions.completed, 0);
+  const totalActions = members.reduce((s, m) => s + m.actions.total, 0);
+  const completedActions = members.reduce((s, m) => s + m.actions.completed, 0);
+
+  const handleAddMember = async () => {
+    if (!user || !addEmail.trim()) return;
+    setAddLoading(true);
+
+    // Look up profile by matching email from profiles
+    // We need to find the user by email - use an edge function or a lookup
+    // For now, we'll look up profiles table and try to find a match
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('id, full_name');
+
+    // Since we can't query auth.users directly, we'll insert by user ID
+    // For a better UX, let's search by the profile data we have access to
+    // Actually, the simplest approach: accept user ID directly or use email lookup via an RPC
+
+    // Simple approach: try to find the user via their profile name or accept UUID
+    // Let's accept an email and look it up — but profiles don't store emails.
+    // Best approach: accept the member's user UUID for now
+    const memberId = addEmail.trim();
+
+    const { error } = await supabase.from('team_members').insert({
+      supervisor_id: user.id,
+      member_id: memberId,
+    });
+
+    setAddLoading(false);
+    if (error) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: 'Member added', description: 'Team member has been added successfully.' });
+      setShowAddDialog(false);
+      setAddEmail('');
+      // Refresh page to reload team data
+      window.location.reload();
+    }
+  };
+
+  const handleRemoveMember = async (memberId: string) => {
+    if (!user) return;
+    const { error } = await supabase
+      .from('team_members')
+      .delete()
+      .eq('supervisor_id', user.id)
+      .eq('member_id', memberId);
+
+    if (error) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: 'Member removed' });
+      window.location.reload();
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 max-w-6xl">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-foreground">{t('teamOverview')}</h1>
-        <Badge variant="secondary" className="gap-1">
-          <Users className="h-3.5 w-3.5" />
-          {mockTeam.length} {t('directReports')}
-        </Badge>
+        <div className="flex items-center gap-2">
+          <Badge variant="secondary" className="gap-1">
+            <Users className="h-3.5 w-3.5" />
+            {members.length} {t('directReports')}
+          </Badge>
+          <Button size="sm" onClick={() => setShowAddDialog(true)}>
+            <Plus className="h-4 w-4 mr-1" />
+            {language === 'fr' ? 'Ajouter' : 'Add Member'}
+          </Button>
+        </div>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {members.length === 0 ? (
         <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <UserCheck className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">{t('lastAssessment')}</p>
-                <p className="text-2xl font-bold">{assessedMembers.length}/{mockTeam.length}</p>
-              </div>
-            </div>
+          <CardContent className="pt-6 text-center space-y-4">
+            <Users className="h-12 w-12 text-muted-foreground mx-auto" />
+            <h2 className="text-lg font-semibold">
+              {language === 'fr' ? 'Aucun collaborateur' : 'No team members yet'}
+            </h2>
+            <p className="text-muted-foreground">
+              {language === 'fr'
+                ? 'Ajoutez des collaborateurs pour voir leurs évaluations et plans de développement.'
+                : 'Add team members to see their assessments and development plans.'}
+            </p>
+            <Button onClick={() => setShowAddDialog(true)}>
+              <Plus className="h-4 w-4 mr-1" />
+              {language === 'fr' ? 'Ajouter un collaborateur' : 'Add a team member'}
+            </Button>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-emerald-500/10">
-                <TrendingUp className="h-5 w-5 text-emerald-600" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">{t('strongestSkill')}</p>
-                <p className="text-lg font-semibold truncate">{strongest?.skill.name[language]}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-amber-500/10">
-                <AlertTriangle className="h-5 w-5 text-amber-600" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">{t('developmentNeeded')}</p>
-                <p className="text-lg font-semibold truncate">{weakest?.skill.name[language]}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <BarChart3 className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">{t('actionsProgress')}</p>
-                <p className="text-2xl font-bold">{completedActions}/{totalActions}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Team Average Radar Chart */}
-      <Card>
-        <CardHeader>
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div>
-              <CardTitle className="text-lg">{t('teamSkillOverview')}</CardTitle>
-              <CardDescription>
-                {language === 'fr' ? 'Comparez un membre avec la moyenne de l\'équipe' :
-                 language === 'es' ? 'Compare un miembro con el promedio del equipo' :
-                 language === 'tr' ? 'Bir üyeyi takım ortalamasıyla karşılaştırın' :
-                 language === 'zh' ? '将成员与团队平均水平进行比较' :
-                 'Compare a member against the team average'}
-              </CardDescription>
-            </div>
-            <div className="flex flex-wrap gap-1.5">
-              <Badge
-                variant={comparedMember === null ? 'default' : 'outline'}
-                className="cursor-pointer"
-                onClick={() => setComparedMember(null)}
-              >
-                {language === 'fr' ? 'Moyenne seule' : language === 'es' ? 'Solo promedio' : language === 'tr' ? 'Sadece ortalama' : language === 'zh' ? '仅平均' : 'Average only'}
-              </Badge>
-              {assessedMembers.map(m => (
-                <Badge
-                  key={m.id}
-                  variant={comparedMember?.id === m.id ? 'default' : 'outline'}
-                  className="cursor-pointer"
-                  onClick={() => setComparedMember(comparedMember?.id === m.id ? null : m)}
-                >
-                  {m.initials}
-                </Badge>
-              ))}
-            </div>
+      ) : (
+        <>
+          {/* Summary Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-primary/10">
+                    <UserCheck className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">{t('lastAssessment')}</p>
+                    <p className="text-2xl font-bold">{assessedMembers.length}/{members.length}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-emerald-500/10">
+                    <TrendingUp className="h-5 w-5 text-emerald-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">{t('strongestSkill')}</p>
+                    <p className="text-lg font-semibold truncate">{strongest?.skill.name[language] ?? '—'}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-amber-500/10">
+                    <AlertTriangle className="h-5 w-5 text-amber-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">{t('developmentNeeded')}</p>
+                    <p className="text-lg font-semibold truncate">{weakest?.skill.name[language] ?? '—'}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-primary/10">
+                    <BarChart3 className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">{t('actionsProgress')}</p>
+                    <p className="text-2xl font-bold">{completedActions}/{totalActions}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
-        </CardHeader>
-        <CardContent>
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <RadarChart data={skillAverages.map(sa => ({
-                skill: sa.skill.name[language],
-                average: parseFloat(sa.avg.toFixed(2)),
-                member: comparedMember ? LEVEL_NUMERIC[comparedMember.skillLevels[sa.skill.id] ?? 'none'] : undefined,
-                fullMark: 4,
-              }))}>
-                <PolarGrid stroke="hsl(var(--border))" />
-                <PolarAngleAxis
-                  dataKey="skill"
-                  tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
-                />
-                <PolarRadiusAxis
-                  angle={30}
-                  domain={[0, 4]}
-                  tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
-                />
-                <Tooltip
-                  content={({ payload, label }) => {
-                    if (!payload?.length) return null;
-                    return (
-                      <div className="rounded-lg border bg-background px-3 py-2 text-xs shadow-xl">
-                        <p className="font-medium mb-1">{label}</p>
-                        {payload.map((entry: any) => (
-                          <div key={entry.dataKey} className="flex justify-between gap-4">
-                            <span className="text-muted-foreground">{entry.name}</span>
-                            <span className="font-mono font-medium">{entry.value}/4</span>
-                          </div>
-                        ))}
-                      </div>
-                    );
-                  }}
-                />
-                <Radar
-                  name={language === 'fr' ? 'Moyenne équipe' : language === 'es' ? 'Promedio equipo' : 'Team Average'}
-                  dataKey="average"
-                  stroke="hsl(var(--primary))"
-                  fill="hsl(var(--primary))"
-                  fillOpacity={0.15}
-                />
+
+          {/* Team Average Radar Chart */}
+          {assessedMembers.length > 0 && (
+            <Card>
+              <CardHeader>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div>
+                    <CardTitle className="text-lg">{t('teamSkillOverview')}</CardTitle>
+                    <CardDescription>
+                      {language === 'fr' ? 'Comparez un membre avec la moyenne de l\'équipe' :
+                       language === 'es' ? 'Compare un miembro con el promedio del equipo' :
+                       language === 'tr' ? 'Bir üyeyi takım ortalamasıyla karşılaştırın' :
+                       language === 'zh' ? '将成员与团队平均水平进行比较' :
+                       'Compare a member against the team average'}
+                    </CardDescription>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    <Badge
+                      variant={comparedMember === null ? 'default' : 'outline'}
+                      className="cursor-pointer"
+                      onClick={() => setComparedMember(null)}
+                    >
+                      {language === 'fr' ? 'Moyenne seule' : 'Average only'}
+                    </Badge>
+                    {assessedMembers.map(m => (
+                      <Badge
+                        key={m.id}
+                        variant={comparedMember?.id === m.id ? 'default' : 'outline'}
+                        className="cursor-pointer"
+                        onClick={() => setComparedMember(comparedMember?.id === m.id ? null : m)}
+                      >
+                        {m.initials}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RadarChart data={skillAverages.map(sa => ({
+                      skill: sa.skill.name[language],
+                      average: parseFloat(sa.avg.toFixed(2)),
+                      member: comparedMember ? LEVEL_NUMERIC[comparedMember.skillLevels[sa.skill.id] ?? 'none'] : undefined,
+                      fullMark: 4,
+                    }))}>
+                      <PolarGrid stroke="hsl(var(--border))" />
+                      <PolarAngleAxis dataKey="skill" tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} />
+                      <PolarRadiusAxis angle={30} domain={[0, 4]} tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
+                      <Tooltip
+                        content={({ payload, label }) => {
+                          if (!payload?.length) return null;
+                          return (
+                            <div className="rounded-lg border bg-background px-3 py-2 text-xs shadow-xl">
+                              <p className="font-medium mb-1">{label}</p>
+                              {payload.map((entry: any) => (
+                                <div key={entry.dataKey} className="flex justify-between gap-4">
+                                  <span className="text-muted-foreground">{entry.name}</span>
+                                  <span className="font-mono font-medium">{entry.value}/4</span>
+                                </div>
+                              ))}
+                            </div>
+                          );
+                        }}
+                      />
+                      <Radar
+                        name={language === 'fr' ? 'Moyenne équipe' : 'Team Average'}
+                        dataKey="average"
+                        stroke="hsl(var(--primary))"
+                        fill="hsl(var(--primary))"
+                        fillOpacity={0.15}
+                      />
+                      {comparedMember && (
+                        <Radar
+                          name={comparedMember.name}
+                          dataKey="member"
+                          stroke="hsl(var(--accent-foreground))"
+                          fill="hsl(var(--accent))"
+                          fillOpacity={0.25}
+                          strokeDasharray="4 4"
+                        />
+                      )}
+                    </RadarChart>
+                  </ResponsiveContainer>
+                </div>
                 {comparedMember && (
-                  <Radar
-                    name={comparedMember.name}
-                    dataKey="member"
-                    stroke="hsl(var(--accent-foreground))"
-                    fill="hsl(var(--accent))"
-                    fillOpacity={0.25}
-                    strokeDasharray="4 4"
-                  />
+                  <div className="flex items-center justify-center gap-6 mt-3 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1.5">
+                      <span className="inline-block w-3 h-0.5 bg-primary rounded" />
+                      {language === 'fr' ? 'Moyenne équipe' : 'Team Average'}
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="inline-block w-3 h-0.5 bg-accent-foreground rounded" style={{ borderTop: '2px dashed hsl(var(--accent-foreground))', height: 0, width: 12 }} />
+                      {comparedMember.name}
+                    </span>
+                  </div>
                 )}
-              </RadarChart>
-            </ResponsiveContainer>
-          </div>
-          {comparedMember && (
-            <div className="flex items-center justify-center gap-6 mt-3 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1.5">
-                <span className="inline-block w-3 h-0.5 bg-primary rounded" />
-                {language === 'fr' ? 'Moyenne équipe' : 'Team Average'}
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="inline-block w-3 h-0.5 bg-accent-foreground rounded border-dashed" style={{ borderTop: '2px dashed hsl(var(--accent-foreground))' , height: 0, width: 12 }} />
-                {comparedMember.name}
-              </span>
-            </div>
+              </CardContent>
+            </Card>
           )}
-        </CardContent>
-      </Card>
 
-      <Tabs defaultValue="members" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="members">{t('directReports')}</TabsTrigger>
-          <TabsTrigger value="skills">{t('teamSkillOverview')}</TabsTrigger>
-        </TabsList>
+          <Tabs defaultValue="members" className="space-y-4">
+            <TabsList>
+              <TabsTrigger value="members">{t('directReports')}</TabsTrigger>
+              <TabsTrigger value="skills">{t('teamSkillOverview')}</TabsTrigger>
+            </TabsList>
 
-        {/* Members Tab */}
-        <TabsContent value="members">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">{t('directReports')}</CardTitle>
-              <CardDescription>{t('team')}</CardDescription>
-            </CardHeader>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{t('teamMember')}</TableHead>
-                    <TableHead>{t('assessmentDate')}</TableHead>
-                    <TableHead>{t('highestLevel')}</TableHead>
-                    <TableHead>{t('focusAreas')}</TableHead>
-                    <TableHead>{t('actionsProgress')}</TableHead>
-                    <TableHead>{t('developmentStatus')}</TableHead>
-                    <TableHead></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {mockTeam.map(member => {
-                    const status = getDevStatus(member);
-                    const StatusIcon = statusConfig[status].icon;
-                    const bestLevel = Object.values(member.skillLevels).filter(Boolean).sort(
-                      (a, b) => LEVEL_NUMERIC[b ?? 'none'] - LEVEL_NUMERIC[a ?? 'none']
-                    )[0];
-
-                    return (
-                      <TableRow key={member.id}>
-                        <TableCell>
-                          <div className="flex items-center gap-3">
-                            <Avatar className="h-8 w-8">
-                              <AvatarFallback className="text-xs bg-primary/10 text-primary">{member.initials}</AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <p className="font-medium text-sm">{member.name}</p>
-                              <p className="text-xs text-muted-foreground">{member.role}</p>
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-sm">
-                          {member.assessmentDate ?? <span className="text-muted-foreground italic">{t('noAssessment')}</span>}
-                        </TableCell>
-                        <TableCell>
-                          {bestLevel ? (
-                            <Badge className={`${masteryLevelColors[bestLevel]} text-white border-0`}>
-                              {t(bestLevel)}
-                            </Badge>
-                          ) : (
-                            <span className="text-muted-foreground text-sm">—</span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex flex-wrap gap-1">
-                            {member.focusSkills.length > 0
-                              ? member.focusSkills.map(sid => {
-                                  const sk = skills.find(s => s.id === sid);
-                                  return sk ? (
-                                    <Badge key={sid} variant="outline" className="text-xs">
-                                      {sk.name[language]}
-                                    </Badge>
-                                  ) : null;
-                                })
-                              : <span className="text-muted-foreground text-sm">—</span>
-                            }
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          {member.actions.total > 0 ? (
-                            <div className="space-y-1 min-w-[100px]">
-                              <Progress value={(member.actions.completed / member.actions.total) * 100} className="h-2" />
-                              <p className="text-xs text-muted-foreground">
-                                {member.actions.completed}/{member.actions.total} {t('completed').toLowerCase()}
-                              </p>
-                            </div>
-                          ) : (
-                            <span className="text-muted-foreground text-sm">—</span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={`gap-1 border-0 ${statusConfig[status].className}`}>
-                            <StatusIcon className="h-3 w-3" />
-                            {t(status)}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setSelectedMember(member)}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                        </TableCell>
+            {/* Members Tab */}
+            <TabsContent value="members">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">{t('directReports')}</CardTitle>
+                  <CardDescription>{t('team')}</CardDescription>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>{t('teamMember')}</TableHead>
+                        <TableHead>{t('assessmentDate')}</TableHead>
+                        <TableHead>{t('highestLevel')}</TableHead>
+                        <TableHead>{t('focusAreas')}</TableHead>
+                        <TableHead>{t('actionsProgress')}</TableHead>
+                        <TableHead>{t('developmentStatus')}</TableHead>
+                        <TableHead></TableHead>
                       </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
+                    </TableHeader>
+                    <TableBody>
+                      {members.map(member => {
+                        const status = getDevStatus(member);
+                        const StatusIcon = statusConfig[status].icon;
+                        const bestLevel = Object.values(member.skillLevels).filter(Boolean).sort(
+                          (a, b) => LEVEL_NUMERIC[b ?? 'none'] - LEVEL_NUMERIC[a ?? 'none']
+                        )[0];
 
-        {/* Skills Tab */}
-        <TabsContent value="skills">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">{t('teamSkillOverview')}</CardTitle>
-              <CardDescription>{t('teamInsights')}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                {skills.map(skill => {
-                  const memberLevels = mockTeam.map(m => ({
-                    member: m,
-                    level: m.skillLevels[skill.id],
-                  }));
-
-                  return (
-                    <div key={skill.id} className="space-y-3">
-                      <h3 className="font-semibold text-sm">{skill.name[language]}</h3>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                        {memberLevels.map(({ member, level }) => (
-                          <div
-                            key={member.id}
-                            className="flex items-center gap-2 p-2 rounded-md border bg-card"
-                          >
-                            <Avatar className="h-6 w-6">
-                              <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
-                                {member.initials}
-                              </AvatarFallback>
-                            </Avatar>
-                            <span className="text-sm flex-1 truncate">{member.name}</span>
-                            {level ? (
-                              <Badge className={`${masteryLevelColors[level]} text-white border-0 text-[10px] px-1.5`}>
-                                {t(level)}
+                        return (
+                          <TableRow key={member.id}>
+                            <TableCell>
+                              <div className="flex items-center gap-3">
+                                <Avatar className="h-8 w-8">
+                                  <AvatarFallback className="text-xs bg-primary/10 text-primary">{member.initials}</AvatarFallback>
+                                </Avatar>
+                                <div>
+                                  <p className="font-medium text-sm">{member.name}</p>
+                                  <p className="text-xs text-muted-foreground">{member.role}</p>
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-sm">
+                              {member.assessmentDate ?? <span className="text-muted-foreground italic">{t('noAssessment')}</span>}
+                            </TableCell>
+                            <TableCell>
+                              {bestLevel ? (
+                                <Badge className={`${masteryLevelColors[bestLevel]} text-white border-0`}>
+                                  {t(bestLevel)}
+                                </Badge>
+                              ) : (
+                                <span className="text-muted-foreground text-sm">—</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex flex-wrap gap-1">
+                                {member.focusSkills.length > 0
+                                  ? member.focusSkills.map(sid => {
+                                      const sk = skills.find(s => s.id === sid);
+                                      return sk ? (
+                                        <Badge key={sid} variant="outline" className="text-xs">
+                                          {sk.name[language]}
+                                        </Badge>
+                                      ) : null;
+                                    })
+                                  : <span className="text-muted-foreground text-sm">—</span>
+                                }
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              {member.actions.total > 0 ? (
+                                <div className="space-y-1 min-w-[100px]">
+                                  <Progress value={(member.actions.completed / member.actions.total) * 100} className="h-2" />
+                                  <p className="text-xs text-muted-foreground">
+                                    {member.actions.completed}/{member.actions.total} {t('completed').toLowerCase()}
+                                  </p>
+                                </div>
+                              ) : (
+                                <span className="text-muted-foreground text-sm">—</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <Badge className={`gap-1 border-0 ${statusConfig[status].className}`}>
+                                <StatusIcon className="h-3 w-3" />
+                                {t(status)}
                               </Badge>
-                            ) : (
-                              <span className="text-xs text-muted-foreground">{t('noAssessment')}</span>
-                            )}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex gap-1">
+                                <Button variant="ghost" size="icon" onClick={() => setSelectedMember(member)}>
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleRemoveMember(member.id)}
+                                  className="text-muted-foreground hover:text-destructive"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Skills Tab */}
+            <TabsContent value="skills">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">{t('teamSkillOverview')}</CardTitle>
+                  <CardDescription>{t('teamInsights')}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-6">
+                    {skills.map(skill => {
+                      const memberLevels = members.map(m => ({
+                        member: m,
+                        level: m.skillLevels[skill.id],
+                      }));
+
+                      return (
+                        <div key={skill.id} className="space-y-3">
+                          <h3 className="font-semibold text-sm">{skill.name[language]}</h3>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                            {memberLevels.map(({ member, level }) => (
+                              <div key={member.id} className="flex items-center gap-2 p-2 rounded-md border bg-card">
+                                <Avatar className="h-6 w-6">
+                                  <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
+                                    {member.initials}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <span className="text-sm flex-1 truncate">{member.name}</span>
+                                {level ? (
+                                  <Badge className={`${masteryLevelColors[level]} text-white border-0 text-[10px] px-1.5`}>
+                                    {t(level)}
+                                  </Badge>
+                                ) : (
+                                  <span className="text-xs text-muted-foreground">{t('noAssessment')}</span>
+                                )}
+                              </div>
+                            ))}
                           </div>
-                        ))}
-                      </div>
-                      <div className="flex gap-4 text-xs text-muted-foreground">
-                        {MASTERY_LEVELS.map(lvl => {
-                          const count = memberLevels.filter(ml => ml.level === lvl).length;
-                          return count > 0 ? (
-                            <span key={lvl} className="flex items-center gap-1">
-                              <span className={`inline-block w-2 h-2 rounded-full ${masteryLevelColors[lvl]}`} />
-                              {t(lvl)}: {count}
-                            </span>
-                          ) : null;
-                        })}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+                          <div className="flex gap-4 text-xs text-muted-foreground">
+                            {MASTERY_LEVELS.map(lvl => {
+                              const count = memberLevels.filter(ml => ml.level === lvl).length;
+                              return count > 0 ? (
+                                <span key={lvl} className="flex items-center gap-1">
+                                  <span className={`inline-block w-2 h-2 rounded-full ${masteryLevelColors[lvl]}`} />
+                                  {t(lvl)}: {count}
+                                </span>
+                              ) : null;
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </>
+      )}
 
       {/* Member Detail Dialog */}
       <Dialog open={!!selectedMember} onOpenChange={() => setSelectedMember(null)}>
@@ -528,6 +571,38 @@ const Team = () => {
               </div>
             </>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Member Dialog */}
+      <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>
+              {language === 'fr' ? 'Ajouter un collaborateur' : 'Add Team Member'}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              {language === 'fr'
+                ? 'Entrez l\'identifiant utilisateur du collaborateur à ajouter.'
+                : 'Enter the user ID of the team member to add.'}
+            </p>
+            <Input
+              placeholder={language === 'fr' ? 'ID utilisateur...' : 'User ID...'}
+              value={addEmail}
+              onChange={e => setAddEmail(e.target.value)}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAddDialog(false)}>
+              {t('cancel')}
+            </Button>
+            <Button onClick={handleAddMember} disabled={addLoading || !addEmail.trim()}>
+              {addLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              {language === 'fr' ? 'Ajouter' : 'Add'}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

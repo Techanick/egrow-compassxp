@@ -86,6 +86,27 @@ export type Database = {
         }
         Relationships: []
       }
+      team_members: {
+        Row: {
+          created_at: string
+          id: string
+          member_id: string
+          supervisor_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          member_id: string
+          supervisor_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          member_id?: string
+          supervisor_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
@@ -114,6 +135,10 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      is_supervisor_of: {
+        Args: { _member_id: string; _supervisor_id: string }
         Returns: boolean
       }
     }
