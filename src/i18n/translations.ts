@@ -83,6 +83,27 @@ type TranslationKeys = {
   todo: string;
   suggestedTools: string;
   behaviorToWorkOn: string;
+  // Team
+  teamOverview: string;
+  directReports: string;
+  lastAssessment: string;
+  highestLevel: string;
+  focusAreas: string;
+  actionsProgress: string;
+  noAssessment: string;
+  viewAssessment: string;
+  viewPlan: string;
+  teamSkillOverview: string;
+  averageLevel: string;
+  teamMember: string;
+  assessmentDate: string;
+  developmentStatus: string;
+  onTrack: string;
+  needsAttention: string;
+  notStarted: string;
+  teamInsights: string;
+  strongestSkill: string;
+  developmentNeeded: string;
   // General
   save: string;
   cancel: string;
@@ -163,6 +184,26 @@ const translations: Record<Language, TranslationKeys> = {
     todo: 'To do',
     suggestedTools: 'Suggested Development Tools',
     behaviorToWorkOn: 'Behaviors to work on',
+    teamOverview: 'Team Overview',
+    directReports: 'Direct Reports',
+    lastAssessment: 'Last Assessment',
+    highestLevel: 'Highest Level',
+    focusAreas: 'Focus Areas',
+    actionsProgress: 'Actions Progress',
+    noAssessment: 'No assessment',
+    viewAssessment: 'View Assessment',
+    viewPlan: 'View Plan',
+    teamSkillOverview: 'Team Skill Overview',
+    averageLevel: 'Average Level',
+    teamMember: 'Team Member',
+    assessmentDate: 'Assessment Date',
+    developmentStatus: 'Development Status',
+    onTrack: 'On Track',
+    needsAttention: 'Needs Attention',
+    notStarted: 'Not Started',
+    teamInsights: 'Team Insights',
+    strongestSkill: 'Strongest Skill',
+    developmentNeeded: 'Development Needed',
     save: 'Save',
     cancel: 'Cancel',
     back: 'Back',
@@ -240,6 +281,26 @@ const translations: Record<Language, TranslationKeys> = {
     todo: 'À faire',
     suggestedTools: 'Outils de développement suggérés',
     behaviorToWorkOn: 'Comportements à travailler',
+    teamOverview: 'Vue d\'ensemble de l\'équipe',
+    directReports: 'Collaborateurs directs',
+    lastAssessment: 'Dernière évaluation',
+    highestLevel: 'Niveau le plus élevé',
+    focusAreas: 'Domaines prioritaires',
+    actionsProgress: 'Progression des actions',
+    noAssessment: 'Pas d\'évaluation',
+    viewAssessment: 'Voir l\'évaluation',
+    viewPlan: 'Voir le plan',
+    teamSkillOverview: 'Vue d\'ensemble des compétences',
+    averageLevel: 'Niveau moyen',
+    teamMember: 'Membre de l\'équipe',
+    assessmentDate: 'Date d\'évaluation',
+    developmentStatus: 'Statut de développement',
+    onTrack: 'En bonne voie',
+    needsAttention: 'Attention requise',
+    notStarted: 'Non commencé',
+    teamInsights: 'Aperçus de l\'équipe',
+    strongestSkill: 'Compétence la plus forte',
+    developmentNeeded: 'Développement nécessaire',
     save: 'Enregistrer',
     cancel: 'Annuler',
     back: 'Retour',
@@ -317,6 +378,26 @@ const translations: Record<Language, TranslationKeys> = {
     todo: 'Pendiente',
     suggestedTools: 'Herramientas de desarrollo sugeridas',
     behaviorToWorkOn: 'Comportamientos a trabajar',
+    teamOverview: 'Vista del equipo',
+    directReports: 'Colaboradores directos',
+    lastAssessment: 'Última evaluación',
+    highestLevel: 'Nivel más alto',
+    focusAreas: 'Áreas de enfoque',
+    actionsProgress: 'Progreso de acciones',
+    noAssessment: 'Sin evaluación',
+    viewAssessment: 'Ver evaluación',
+    viewPlan: 'Ver plan',
+    teamSkillOverview: 'Vista de competencias del equipo',
+    averageLevel: 'Nivel promedio',
+    teamMember: 'Miembro del equipo',
+    assessmentDate: 'Fecha de evaluación',
+    developmentStatus: 'Estado de desarrollo',
+    onTrack: 'En camino',
+    needsAttention: 'Necesita atención',
+    notStarted: 'No iniciado',
+    teamInsights: 'Perspectivas del equipo',
+    strongestSkill: 'Competencia más fuerte',
+    developmentNeeded: 'Desarrollo necesario',
     save: 'Guardar',
     cancel: 'Cancelar',
     back: 'Atrás',
@@ -394,6 +475,26 @@ const translations: Record<Language, TranslationKeys> = {
     todo: 'Yapılacak',
     suggestedTools: 'Önerilen Gelişim Araçları',
     behaviorToWorkOn: 'Üzerinde çalışılacak davranışlar',
+    teamOverview: 'Takım Genel Görünümü',
+    directReports: 'Doğrudan Raporlar',
+    lastAssessment: 'Son Değerlendirme',
+    highestLevel: 'En Yüksek Seviye',
+    focusAreas: 'Odak Alanları',
+    actionsProgress: 'Eylem İlerlemesi',
+    noAssessment: 'Değerlendirme yok',
+    viewAssessment: 'Değerlendirmeyi gör',
+    viewPlan: 'Planı gör',
+    teamSkillOverview: 'Takım Yetkinlik Genel Görünümü',
+    averageLevel: 'Ortalama Seviye',
+    teamMember: 'Takım Üyesi',
+    assessmentDate: 'Değerlendirme Tarihi',
+    developmentStatus: 'Gelişim Durumu',
+    onTrack: 'Yolunda',
+    needsAttention: 'Dikkat Gerekiyor',
+    notStarted: 'Başlamadı',
+    teamInsights: 'Takım İçgörüleri',
+    strongestSkill: 'En Güçlü Yetkinlik',
+    developmentNeeded: 'Gelişim Gerekli',
     save: 'Kaydet',
     cancel: 'İptal',
     back: 'Geri',
@@ -471,6 +572,26 @@ const translations: Record<Language, TranslationKeys> = {
     todo: '待办',
     suggestedTools: '推荐发展工具',
     behaviorToWorkOn: '需要改进的行为',
+    teamOverview: '团队概览',
+    directReports: '直接下属',
+    lastAssessment: '最近评估',
+    highestLevel: '最高等级',
+    focusAreas: '重点领域',
+    actionsProgress: '行动进度',
+    noAssessment: '暂无评估',
+    viewAssessment: '查看评估',
+    viewPlan: '查看计划',
+    teamSkillOverview: '团队技能概览',
+    averageLevel: '平均等级',
+    teamMember: '团队成员',
+    assessmentDate: '评估日期',
+    developmentStatus: '发展状态',
+    onTrack: '正常推进',
+    needsAttention: '需要关注',
+    notStarted: '未开始',
+    teamInsights: '团队洞察',
+    strongestSkill: '最强技能',
+    developmentNeeded: '需要发展',
     save: '保存',
     cancel: '取消',
     back: '返回',
