@@ -16,6 +16,7 @@ export interface TeamMemberData {
   avatarUrl: string | null;
   assessmentDate: string | null;
   skillLevels: Record<string, MasteryLevel | null>;
+  ratings: Record<string, Rating>;
   focusSkills: string[];
   actions: { total: number; completed: number; inProgress: number };
 }
@@ -131,6 +132,7 @@ export function useTeamData(dateRange?: DateRange) {
         avatarUrl: profile.avatar_url || null,
         assessmentDate: latestAssessment?.created_at?.split('T')[0] ?? null,
         skillLevels,
+        ratings,
         focusSkills: planSkills,
         actions: {
           total: planActions.length,
