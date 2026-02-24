@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manager Connect — User Manual</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    
+    :root {
+      --primary: #1a365d;
+      --accent: #2b6cb0;
+      --muted: #718096;
+      --border: #e2e8f0;
+      --bg: #ffffff;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      color: #1a202c;
+      line-height: 1.7;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 48px 32px;
+      background: var(--bg);
+    }
+
+    @media print {
+      body { padding: 0; font-size: 11pt; }
+      .no-print { display: none !important; }
+      h1, h2, h3 { break-after: avoid; }
+      section { break-inside: avoid; }
+    }
+
+    .print-btn {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      z-index: 100;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+    .print-btn:hover { background: var(--primary); }
+
+    .cover {
+      text-align: center;
+      padding: 60px 0 40px;
+      border-bottom: 3px solid var(--primary);
+      margin-bottom: 40px;
+    }
+    .cover h1 {
+      font-size: 32px;
+      color: var(--primary);
+      margin-bottom: 8px;
+    }
+    .cover .subtitle {
+      font-size: 16px;
+      color: var(--muted);
+      margin-bottom: 24px;
+    }
+    .cover .meta {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .toc { margin-bottom: 40px; }
+    .toc h2 { font-size: 20px; color: var(--primary); margin-bottom: 12px; }
+    .toc ol { padding-left: 24px; }
+    .toc li { margin-bottom: 6px; }
+    .toc a { color: var(--accent); text-decoration: none; }
+    .toc a:hover { text-decoration: underline; }
+
+    h2 {
+      font-size: 22px;
+      color: var(--primary);
+      margin-top: 40px;
+      margin-bottom: 12px;
+      padding-bottom: 6px;
+      border-bottom: 2px solid var(--border);
+    }
+
+    h3 {
+      font-size: 16px;
+      color: var(--accent);
+      margin-top: 20px;
+      margin-bottom: 8px;
+    }
+
+    p, li { margin-bottom: 8px; }
+    ul, ol { padding-left: 24px; margin-bottom: 12px; }
+
+    .tip {
+      background: #ebf8ff;
+      border-left: 4px solid var(--accent);
+      padding: 12px 16px;
+      margin: 16px 0;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+
+    .warning {
+      background: #fffbeb;
+      border-left: 4px solid #d69e2e;
+      padding: 12px 16px;
+      margin: 16px 0;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      font-size: 14px;
+    }
+    th, td {
+      border: 1px solid var(--border);
+      padding: 8px 12px;
+      text-align: left;
+    }
+    th { background: #f7fafc; font-weight: 600; color: var(--primary); }
+
+    .level-chip {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .level-fund { background: #c6f6d5; color: #22543d; }
+    .level-inter { background: #bee3f8; color: #2a4365; }
+    .level-adv { background: #e9d8fd; color: #44337a; }
+    .level-ref { background: #fed7e2; color: #97266d; }
+
+    footer {
+      margin-top: 60px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+      text-align: center;
+      font-size: 12px;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+
+<button class="print-btn no-print" onclick="window.print()">💾 Save as PDF</button>
+
+<!-- COVER -->
+<div class="cover">
+  <h1>Manager Connect</h1>
+  <p class="subtitle">User Manual</p>
+  <p class="meta">Expanscience Management Framework Companion App</p>
+  <p class="meta">Version 1.0 — February 2026</p>
+</div>
+
+<!-- TABLE OF CONTENTS -->
+<nav class="toc">
+  <h2>Table of Contents</h2>
+  <ol>
+    <li><a href="#overview">Overview</a></li>
+    <li><a href="#getting-started">Getting Started</a></li>
+    <li><a href="#dashboard">Dashboard</a></li>
+    <li><a href="#framework">Framework Explorer</a></li>
+    <li><a href="#assessment">Self-Assessment</a></li>
+    <li><a href="#plan">Development Plan</a></li>
+    <li><a href="#team">Team Management</a></li>
+    <li><a href="#settings">Settings</a></li>
+    <li><a href="#languages">Language Support</a></li>
+    <li><a href="#faq">FAQ &amp; Troubleshooting</a></li>
+  </ol>
+</nav>
+
+<!-- 1. OVERVIEW -->
+<section id="overview">
+  <h2>1. Overview</h2>
+  <p><strong>Manager Connect</strong> is a companion app for the Expanscience Management Framework. It helps managers:</p>
+  <ul>
+    <li>Explore the 4 Roles, 6 Skills, and 96 Behaviors of the management framework</li>
+    <li>Conduct periodic self-assessments against framework behaviors</li>
+    <li>Build and track personalized development plans</li>
+    <li>Receive timely reminders aligned with the performance cycle</li>
+  </ul>
+  <p>For HR and supervisors, the app also provides team oversight, assessment review, and aggregated skill analytics.</p>
+</section>
+
+<!-- 2. GETTING STARTED -->
+<section id="getting-started">
+  <h2>2. Getting Started</h2>
+
+  <h3>2.1 Creating Your Account</h3>
+  <ol>
+    <li>Navigate to the application URL</li>
+    <li>Click <strong>"Sign Up"</strong> on the login page</li>
+    <li>Enter your full name, email address, and a secure password</li>
+    <li>Check your inbox for a <strong>verification email</strong> and click the confirmation link</li>
+    <li>Return to the app and sign in with your credentials</li>
+  </ol>
+
+  <h3>2.2 Signing In</h3>
+  <ol>
+    <li>Go to the login page</li>
+    <li>Enter your email and password</li>
+    <li>Click <strong>"Sign In"</strong></li>
+  </ol>
+
+  <h3>2.3 Resetting Your Password</h3>
+  <ol>
+    <li>On the login page, click <strong>"Forgot Password?"</strong></li>
+    <li>Enter your registered email address</li>
+    <li>Follow the link in the password reset email</li>
+    <li>Set a new password and sign in</li>
+  </ol>
+
+  <div class="tip">💡 <strong>Tip:</strong> Choose a strong password with at least 8 characters, including uppercase, lowercase, and a number.</div>
+</section>
+
+<!-- 3. DASHBOARD -->
+<section id="dashboard">
+  <h2>3. Dashboard</h2>
+  <p>The Dashboard is your home screen after signing in. It provides an at-a-glance summary of your management development journey.</p>
+
+  <h3>3.1 Periodic Reminders</h3>
+  <p>At the top of the Dashboard, contextual reminder cards appear based on your activity:</p>
+  <table>
+    <tr>
+      <th>Reminder</th>
+      <th>Trigger</th>
+      <th>Urgency</th>
+    </tr>
+    <tr>
+      <td>No assessment completed</td>
+      <td>You have never submitted a self-assessment</td>
+      <td>🔴 Urgent</td>
+    </tr>
+    <tr>
+      <td>Annual review due</td>
+      <td>Last assessment was more than 270 days ago</td>
+      <td>🔴 Urgent</td>
+    </tr>
+    <tr>
+      <td>Quarterly check-in</td>
+      <td>Last assessment was more than 90 days ago</td>
+      <td>🟡 Warning</td>
+    </tr>
+    <tr>
+      <td>No development plan</td>
+      <td>You completed an assessment but have no plan</td>
+      <td>🟡 Warning</td>
+    </tr>
+    <tr>
+      <td>Plan needs update</td>
+      <td>Development plan not updated in 30+ days</td>
+      <td>🔵 Info / 🔴 Urgent (90+ days)</td>
+    </tr>
+  </table>
+  <p>Click any reminder card to navigate directly to the relevant section.</p>
+
+  <h3>3.2 Quick Actions</h3>
+  <p>Three shortcut cards let you jump to common tasks:</p>
+  <ul>
+    <li><strong>Start Assessment</strong> — begin or continue a self-assessment</li>
+    <li><strong>Update Plan</strong> — view or modify your development plan</li>
+    <li><strong>Browse Framework</strong> — explore skills, roles, and behaviors</li>
+  </ul>
+
+  <h3>3.3 Progress Summary (Radar Chart)</h3>
+  <p>A radar/spider chart shows your current mastery level across the 6 management skills. Each axis represents one skill, with levels from 0 (no data) to 4 (Referent/Role Model).</p>
+  <p>The chart updates automatically when you submit a new self-assessment.</p>
+</section>
+
+<!-- 4. FRAMEWORK EXPLORER -->
+<section id="framework">
+  <h2>4. Framework Explorer</h2>
+  <p>The Framework Explorer is your interactive reference for the Expanscience Management Framework.</p>
+
+  <h3>4.1 Structure</h3>
+  <table>
+    <tr><th>Level</th><th>Description</th></tr>
+    <tr><td><strong>4 Roles</strong></td><td>The key roles a manager plays (e.g., Coach, Leader, Organizer, Expert)</td></tr>
+    <tr><td><strong>6 Skills</strong></td><td>Core competencies grouped under the roles</td></tr>
+    <tr><td><strong>96 Behaviors</strong></td><td>Observable behaviors organized by mastery level</td></tr>
+  </table>
+
+  <h3>4.2 Mastery Levels</h3>
+  <p>Each skill has behaviors organized into four mastery levels:</p>
+  <ul>
+    <li><span class="level-chip level-fund">Fundamentals</span> — Essential baseline behaviors</li>
+    <li><span class="level-chip level-inter">Intermediate</span> — Developing proficiency</li>
+    <li><span class="level-chip level-adv">Advanced</span> — Strong, consistent practice</li>
+    <li><span class="level-chip level-ref">Referent / Role Model</span> — Exemplary, coaching others</li>
+  </ul>
+
+  <h3>4.3 Development Tools</h3>
+  <p>Each skill links to recommended development tools (e.g., Insights Discovery, NVC, SMART Objectives). Click a tool name to see its description, format, and when to use it.</p>
+</section>
+
+<!-- 5. SELF-ASSESSMENT -->
+<section id="assessment">
+  <h2>5. Self-Assessment</h2>
+
+  <h3>5.1 How It Works</h3>
+  <ol>
+    <li>Navigate to <strong>Self-Assessment</strong> from the sidebar</li>
+    <li>For each of the 6 skills, you'll see behaviors grouped by mastery level</li>
+    <li>Rate how often you observe each behavior in yourself:
+      <ul>
+        <li><strong>Hardly ever</strong></li>
+        <li><strong>Sometimes</strong></li>
+        <li><strong>Often</strong></li>
+        <li><strong>Almost always</strong></li>
+      </ul>
+    </li>
+    <li>Click <strong>"Submit Assessment"</strong> when finished</li>
+  </ol>
+
+  <h3>5.2 Level Validation Logic</h3>
+  <p>A mastery level is <strong>validated</strong> when at least <strong>3 behaviors</strong> at that level are rated <em>"Often"</em> or <em>"Almost always."</em></p>
+  <div class="tip">💡 <strong>Tip:</strong> Be honest in your self-assessment. The goal is development, not evaluation. Accurate ratings lead to more meaningful development plans.</div>
+
+  <h3>5.3 Assessment History</h3>
+  <p>All your past assessments are saved and accessible from the assessment page. You can compare your progress over time.</p>
+
+  <h3>5.4 Recommended Frequency</h3>
+  <ul>
+    <li><strong>Annual</strong> — Full assessment before the Q3 development interview (mandatory)</li>
+    <li><strong>Quarterly</strong> — Quick check-in to track progress (recommended)</li>
+  </ul>
+</section>
+
+<!-- 6. DEVELOPMENT PLAN -->
+<section id="plan">
+  <h2>6. Development Plan</h2>
+
+  <h3>6.1 Creating a Plan</h3>
+  <ol>
+    <li>After completing a self-assessment, navigate to <strong>Development Plan</strong></li>
+    <li>The app recommends 1–2 skills to focus on based on your assessment gaps</li>
+    <li>Select target skills, target mastery level, and specific behaviors to work on</li>
+    <li>For each behavior, define <strong>concrete development actions</strong>:
+      <ul>
+        <li>Training or workshop attendance</li>
+        <li>Reading or e-learning</li>
+        <li>Feedback sessions with peers</li>
+        <li>Co-development groups</li>
+        <li>Coaching engagements</li>
+      </ul>
+    </li>
+    <li>Set <strong>deadlines</strong> aligned with your performance cycle</li>
+  </ol>
+
+  <h3>6.2 Tracking Progress</h3>
+  <p>Mark actions as <strong>in progress</strong> or <strong>completed</strong> as you advance. The Dashboard radar chart will reflect your improvements after your next self-assessment.</p>
+
+  <div class="warning">⚠️ <strong>Important:</strong> Review and update your development plan at least once a month to stay on track.</div>
+</section>
+
+<!-- 7. TEAM MANAGEMENT -->
+<section id="team">
+  <h2>7. Team Management</h2>
+  <p>The <strong>Team</strong> section is available for users with supervisor or HR roles.</p>
+
+  <h3>7.1 Supervisor View</h3>
+  <ul>
+    <li>View direct reports' self-assessment results and development plans</li>
+    <li>Review and validate assessments during the Q3 development interview</li>
+    <li>See an aggregated team view to identify collective development needs</li>
+  </ul>
+
+  <h3>7.2 Managing Team Members</h3>
+  <ul>
+    <li>Add team members by email from the Team page</li>
+    <li>Remove team members when reporting lines change</li>
+  </ul>
+
+  <h3>7.3 HR View</h3>
+  <p>HR users can see all managers across the organization, assign roles, and access broader analytics.</p>
+</section>
+
+<!-- 8. SETTINGS -->
+<section id="settings">
+  <h2>8. Settings</h2>
+  <p>Access Settings from the sidebar to manage your profile and preferences:</p>
+  <ul>
+    <li><strong>Full Name</strong> — Update your display name</li>
+    <li><strong>Department</strong> — Select your department from the organizational structure</li>
+    <li><strong>Geography</strong> — Set your geographic zone</li>
+    <li><strong>Language</strong> — Choose your preferred language (see section 9)</li>
+    <li><strong>Notification Preferences</strong> — Toggle reminders for assessments and plan updates</li>
+  </ul>
+</section>
+
+<!-- 9. LANGUAGES -->
+<section id="languages">
+  <h2>9. Language Support</h2>
+  <p>Manager Connect is available in <strong>6 languages</strong>:</p>
+  <table>
+    <tr><th>Code</th><th>Language</th></tr>
+    <tr><td>EN</td><td>English</td></tr>
+    <tr><td>FR</td><td>Français</td></tr>
+    <tr><td>ES</td><td>Español</td></tr>
+    <tr><td>TR</td><td>Türkçe</td></tr>
+    <tr><td>ZH</td><td>中文</td></tr>
+    <tr><td>IT</td><td>Italiano</td></tr>
+  </table>
+  <p>You can switch languages at any time using the language selector in the sidebar or in Settings. All framework content (roles, skills, behaviors) and UI text will update immediately.</p>
+</section>
+
+<!-- 10. FAQ -->
+<section id="faq">
+  <h2>10. FAQ &amp; Troubleshooting</h2>
+
+  <h3>Q: How often should I complete a self-assessment?</h3>
+  <p>A: At minimum once per year before the Q3 development interview. Quarterly check-ins are recommended for continuous development tracking.</p>
+
+  <h3>Q: Can I edit a submitted assessment?</h3>
+  <p>A: No, but you can complete a new assessment at any time. Your history is preserved so you can track your evolution over time.</p>
+
+  <h3>Q: What does it mean when a mastery level is "validated"?</h3>
+  <p>A: A level is validated when you rate at least 3 behaviors at that level as "Often" or "Almost always." This indicates consistent practice of those behaviors.</p>
+
+  <h3>Q: I don't see the Team section in my sidebar.</h3>
+  <p>A: The Team section is only visible to users with a supervisor or HR role. Contact your HR administrator to update your role if needed.</p>
+
+  <h3>Q: Can my supervisor see my self-assessment?</h3>
+  <p>A: Yes. If you are assigned as a direct report to a supervisor, they can view your assessments and development plans to facilitate the development interview.</p>
+
+  <h3>Q: How do I change my password?</h3>
+  <p>A: Sign out, then click "Forgot Password?" on the login page and follow the email instructions.</p>
+</section>
+
+<footer>
+  <p>Manager Connect — Expanscience Management Framework Companion</p>
+  <p>© 2026 Expanscience. For internal use only.</p>
+</footer>
+
+</body>
+</html>
