@@ -56,7 +56,12 @@ interface SkillPlan {
   actions: PlanAction[];
 }
 
-export function useTeamData() {
+export interface DateRange {
+  from: Date | undefined;
+  to: Date | undefined;
+}
+
+export function useTeamData(dateRange?: DateRange) {
   const { user } = useAuth();
   const [members, setMembers] = useState<TeamMemberData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -78,9 +83,26 @@ export function useTeamData() {
 
     const memberIds = teamRels.map(r => r.member_id);
 
+    // Build assessments query with optional date filtering
+    let assessmentsQuery = supabase
+      .from('assessments')
+      .select('user_id, ratings, created_at')
+      .in('user_id', memberIds)
+      .order('created_at', { ascending: false });
+
+    if (dateRange?.from) {
+      assessmentsQuery = assessmentsQuery.gte('created_at', dateRange.from.toISOString());
+    }
+    if (dateRange?.to) {
+      // Include the entire "to" day
+      const endOfDay = new Date(dateRange.to);
+      endOfDay.setHours(23, 59, 59, 999);
+      assessmentsQuery = assessmentsQuery.lte('created_at', endOfDay.toISOString());
+    }
+
     const [profilesRes, assessmentsRes, plansRes] = await Promise.all([
       supabase.from('profiles').select('id, full_name, role').in('id', memberIds),
-      supabase.from('assessments').select('user_id, ratings, created_at').in('user_id', memberIds).order('created_at', { ascending: false }),
+      assessmentsQuery,
       supabase.from('development_plans').select('user_id, selected_skills, plans, updated_at').in('user_id', memberIds).order('updated_at', { ascending: false }),
     ]);
 
@@ -118,7 +140,7 @@ export function useTeamData() {
 
     setMembers(memberData);
     setLoading(false);
-  }, [user]);
+  }, [user, dateRange?.from?.getTime(), dateRange?.to?.getTime()]);
 
   useEffect(() => {
     fetchTeam();
