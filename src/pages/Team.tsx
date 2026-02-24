@@ -48,7 +48,7 @@ const statusConfig = {
 const Team = () => {
   const { t, language } = useLanguage();
   const { user } = useAuth();
-  const { members, loading } = useTeamData();
+  const { members, loading, refresh } = useTeamData();
   const [selectedMember, setSelectedMember] = useState<TeamMemberData | null>(null);
   const [comparedMember, setComparedMember] = useState<TeamMemberData | null>(null);
   const [showAddDialog, setShowAddDialog] = useState(false);
@@ -113,7 +113,7 @@ const Team = () => {
         toast({ title: 'Member added', description: `${data.email} has been added to your team.` });
         setShowAddDialog(false);
         setAddEmail('');
-        window.location.reload();
+        refresh();
       }
     } catch {
       toast({ title: 'Error', description: 'Something went wrong.', variant: 'destructive' });
@@ -134,7 +134,7 @@ const Team = () => {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } else {
       toast({ title: 'Member removed' });
-      window.location.reload();
+      refresh();
     }
   };
 
