@@ -1,5 +1,8 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useLanguage } from '@/i18n/LanguageContext';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -53,11 +56,10 @@ const VALIDATION_THRESHOLD = 3;
 
 const DevelopmentPlan = () => {
   const { t, language } = useLanguage();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
-  // Simulated assessment ratings (in real app, from DB/context)
-  const [ratings] = useState<Record<string, Rating>>(() => {
-    // Try to load from sessionStorage for demo continuity
+  const [ratings, setRatings] = useState<Record<string, Rating>>(() => {
     const saved = sessionStorage.getItem('assessment_ratings');
     return saved ? JSON.parse(saved) : {};
   });
@@ -66,8 +68,43 @@ const DevelopmentPlan = () => {
   const [plans, setPlans] = useState<SkillPlan[]>([]);
   const [phase, setPhase] = useState<'select' | 'plan'>('select');
   const [expandedSkills, setExpandedSkills] = useState<Record<string, boolean>>({});
+  const [planId, setPlanId] = useState<string | null>(null);
 
-  const hasAssessment = Object.keys(ratings).length > 0;
+  // Load latest assessment and plan from DB
+  useEffect(() => {
+    if (!user) return;
+    // Load assessment
+    supabase
+      .from('assessments')
+      .select('ratings')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .then(({ data }) => {
+        if (data && data.length > 0 && data[0].ratings) {
+          setRatings(data[0].ratings as Record<string, Rating>);
+        }
+      });
+    // Load dev plan
+    supabase
+      .from('development_plans')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .then(({ data }) => {
+        if (data && data.length > 0) {
+          const plan = data[0];
+          setPlanId(plan.id);
+          setSelectedSkillIds(plan.selected_skills || []);
+          setPlans((plan.plans as any) || []);
+          if ((plan.plans as any[])?.length > 0) {
+            setPhase('plan');
+            setExpandedSkills({ [(plan.plans as any[])[0].skillId]: true });
+          }
+        }
+      });
+  }, [user]);
 
   // Compute gap analysis per skill
   const skillGaps = useMemo(() => {
@@ -121,6 +158,17 @@ const DevelopmentPlan = () => {
     );
   };
 
+  const savePlanToDB = async (newPlans: SkillPlan[], skillIds: string[]) => {
+    if (!user) return;
+    const payload = { user_id: user.id, selected_skills: skillIds, plans: newPlans as any, updated_at: new Date().toISOString() };
+    if (planId) {
+      await supabase.from('development_plans').update(payload).eq('id', planId);
+    } else {
+      const { data } = await supabase.from('development_plans').insert(payload).select('id').single();
+      if (data) setPlanId(data.id);
+    }
+  };
+
   const startPlan = () => {
     const newPlans = selectedSkillIds.map(skillId => {
       const gap = skillGaps.find(g => g.skill.id === skillId)!;
@@ -132,15 +180,15 @@ const DevelopmentPlan = () => {
     });
     setPlans(newPlans);
     setPhase('plan');
-    // Expand first skill
     if (newPlans.length > 0) {
       setExpandedSkills({ [newPlans[0].skillId]: true });
     }
+    savePlanToDB(newPlans, selectedSkillIds);
   };
 
   const addAction = (skillId: string, behaviorId?: string) => {
-    setPlans(prev =>
-      prev.map(p =>
+    setPlans(prev => {
+      const next = prev.map(p =>
         p.skillId === skillId
           ? {
               ...p,
@@ -156,31 +204,37 @@ const DevelopmentPlan = () => {
               ],
             }
           : p
-      )
-    );
+      );
+      savePlanToDB(next, selectedSkillIds);
+      return next;
+    });
   };
 
   const updateAction = (skillId: string, actionId: string, updates: Partial<ActionItem>) => {
-    setPlans(prev =>
-      prev.map(p =>
+    setPlans(prev => {
+      const next = prev.map(p =>
         p.skillId === skillId
           ? {
               ...p,
               actions: p.actions.map(a => (a.id === actionId ? { ...a, ...updates } : a)),
             }
           : p
-      )
-    );
+      );
+      savePlanToDB(next, selectedSkillIds);
+      return next;
+    });
   };
 
   const removeAction = (skillId: string, actionId: string) => {
-    setPlans(prev =>
-      prev.map(p =>
+    setPlans(prev => {
+      const next = prev.map(p =>
         p.skillId === skillId
           ? { ...p, actions: p.actions.filter(a => a.id !== actionId) }
           : p
-      )
-    );
+      );
+      savePlanToDB(next, selectedSkillIds);
+      return next;
+    });
   };
 
   const cycleStatus = (current: ActionStatus): ActionStatus => {
@@ -206,6 +260,8 @@ const DevelopmentPlan = () => {
       case 'completed': return t('completed');
     }
   };
+
+  const hasAssessment = Object.keys(ratings).length > 0;
 
   // No assessment yet
   if (!hasAssessment) {
