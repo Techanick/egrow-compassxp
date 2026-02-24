@@ -1,7 +1,8 @@
 import { useState } from 'react';
+import { format } from 'date-fns';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/hooks/useAuth';
-import { useTeamData, TeamMemberData } from '@/hooks/useTeamData';
+import { useTeamData, TeamMemberData, DateRange } from '@/hooks/useTeamData';
 import { supabase } from '@/integrations/supabase/client';
 import { skills, masteryLevelColors, MasteryLevel } from '@/data/frameworkData';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -14,7 +15,7 @@ import {
 } from '@/components/ui/table';
 import {
   Users, TrendingUp, AlertTriangle, CheckCircle2, Clock, Eye,
-  BarChart3, UserCheck, Plus, Loader2, Trash2, Download,
+  BarChart3, UserCheck, Plus, Loader2, Trash2, Download, CalendarIcon, X,
 } from 'lucide-react';
 import {
   RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar,
@@ -30,6 +31,9 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { toast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 const MASTERY_LEVELS: MasteryLevel[] = ['fundamentals', 'intermediate', 'advanced', 'referent'];
 const LEVEL_NUMERIC: Record<MasteryLevel | 'none', number> = {
@@ -52,7 +56,8 @@ const statusConfig = {
 const Team = () => {
   const { t, language } = useLanguage();
   const { user } = useAuth();
-  const { members, loading, refresh } = useTeamData();
+  const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
+  const { members, loading, refresh } = useTeamData(dateRange);
   const [selectedMember, setSelectedMember] = useState<TeamMemberData | null>(null);
   const [comparedMember, setComparedMember] = useState<TeamMemberData | null>(null);
   const [showAddDialog, setShowAddDialog] = useState(false);
@@ -219,6 +224,47 @@ const Team = () => {
             {language === 'fr' ? 'Ajouter' : 'Add Member'}
           </Button>
         </div>
+      </div>
+
+      {/* Date Range Filter */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" size="sm" className={cn(
+              "justify-start text-left font-normal",
+              !dateRange.from && "text-muted-foreground"
+            )}>
+              <CalendarIcon className="h-4 w-4 mr-2" />
+              {dateRange.from
+                ? dateRange.to
+                  ? `${format(dateRange.from, 'PP')} – ${format(dateRange.to, 'PP')}`
+                  : format(dateRange.from, 'PP')
+                : (language === 'fr' ? 'Filtrer par période' : 'Filter by date range')}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              mode="range"
+              selected={dateRange.from ? { from: dateRange.from, to: dateRange.to } : undefined}
+              onSelect={(range) => setDateRange({ from: range?.from, to: range?.to })}
+              numberOfMonths={2}
+              disabled={(date) => date > new Date()}
+              initialFocus
+              className={cn("p-3 pointer-events-auto")}
+            />
+          </PopoverContent>
+        </Popover>
+        {(dateRange.from || dateRange.to) && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setDateRange({ from: undefined, to: undefined })}
+            className="h-8 px-2 text-muted-foreground"
+          >
+            <X className="h-4 w-4 mr-1" />
+            {language === 'fr' ? 'Effacer' : 'Clear'}
+          </Button>
+        )}
       </div>
 
       {members.length === 0 ? (
