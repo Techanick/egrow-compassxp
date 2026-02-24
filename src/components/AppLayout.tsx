@@ -17,6 +17,7 @@ import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Language, languageNames } from '@/i18n/translations';
+import expanscienceLogo from '@/assets/expanscience-logo.png';
 import {
   Sidebar,
   SidebarContent,
@@ -72,10 +73,8 @@ export function AppLayout({ children }: { children: ReactNode }) {
       <div className="min-h-screen flex w-full">
         <Sidebar className="border-r border-sidebar-border">
           <div className="p-4 border-b border-sidebar-border">
-            <h1 className="text-lg font-bold text-sidebar-primary-foreground tracking-tight">
-              Expanscience
-            </h1>
-            <p className="text-xs text-sidebar-foreground/60">Management Framework</p>
+            <img src={expanscienceLogo} alt="Expanscience Laboratoires" className="h-8 object-contain brightness-0 invert" />
+            <p className="text-xs text-sidebar-foreground/60 mt-1">Management Framework</p>
           </div>
           <SidebarContent>
             <SidebarGroup>

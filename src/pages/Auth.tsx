@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
+import expanscienceLogo from '@/assets/expanscience-logo.png';
 
 type AuthMode = 'login' | 'signup' | 'forgot';
 
@@ -67,8 +68,8 @@ const Auth = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Expanscience</CardTitle>
+        <CardHeader className="text-center space-y-4">
+          <img src={expanscienceLogo} alt="Expanscience Laboratoires" className="h-12 mx-auto object-contain" />
           <CardDescription>
             {mode === 'login' ? t('login') : mode === 'signup' ? 'Create an account' : 'Reset your password'}
           </CardDescription>
