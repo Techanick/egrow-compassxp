@@ -25,6 +25,10 @@ import { Input } from '@/components/ui/input';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { toast } from '@/hooks/use-toast';
 
 const MASTERY_LEVELS: MasteryLevel[] = ['fundamentals', 'intermediate', 'advanced', 'referent'];
@@ -55,6 +59,7 @@ const Team = () => {
   const [addEmail, setAddEmail] = useState('');
   const [addEmailError, setAddEmailError] = useState('');
   const [addLoading, setAddLoading] = useState(false);
+  const [memberToRemove, setMemberToRemove] = useState<TeamMemberData | null>(null);
 
   const validateEmail = (email: string) => {
     if (!email.trim()) return '';
@@ -438,7 +443,7 @@ const Team = () => {
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  onClick={() => handleRemoveMember(member.id)}
+                                  onClick={() => setMemberToRemove(member)}
                                   className="text-muted-foreground hover:text-destructive"
                                 >
                                   <Trash2 className="h-4 w-4" />
@@ -627,6 +632,36 @@ const Team = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Remove Member Confirmation */}
+      <AlertDialog open={!!memberToRemove} onOpenChange={() => setMemberToRemove(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {language === 'fr' ? 'Retirer ce collaborateur ?' : 'Remove team member?'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {language === 'fr'
+                ? `Êtes-vous sûr de vouloir retirer ${memberToRemove?.name} de votre équipe ? Cette action est irréversible.`
+                : `Are you sure you want to remove ${memberToRemove?.name} from your team? This action cannot be undone.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (memberToRemove) {
+                  handleRemoveMember(memberToRemove.id);
+                  setMemberToRemove(null);
+                }
+              }}
+            >
+              {language === 'fr' ? 'Retirer' : 'Remove'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
