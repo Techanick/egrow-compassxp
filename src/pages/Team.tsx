@@ -623,11 +623,16 @@ const Team = () => {
       <Dialog open={!!selectedMember} onOpenChange={() => setSelectedMember(null)}>
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           {selectedMember && (() => {
-            const memberRadarData = skills.map(skill => ({
-              skill: skill.name[language],
-              value: LEVEL_NUMERIC[selectedMember.skillLevels[skill.id] ?? 'none'],
-              fullMark: 4,
-            }));
+            const memberRadarData = skills.map(skill => {
+              const avgValues = assessedMembers.map(m => LEVEL_NUMERIC[m.skillLevels[skill.id] ?? 'none']).filter(v => v > 0);
+              const avg = avgValues.length > 0 ? avgValues.reduce((a, b) => a + b, 0) / avgValues.length : 0;
+              return {
+                skill: skill.name[language],
+                value: LEVEL_NUMERIC[selectedMember.skillLevels[skill.id] ?? 'none'],
+                average: parseFloat(avg.toFixed(2)),
+                fullMark: 4,
+              };
+            });
             const hasAssessment = Object.values(selectedMember.skillLevels).some(Boolean);
             const status = getDevStatus(selectedMember);
             const StatusIcon = statusConfig[status].icon;
@@ -662,7 +667,7 @@ const Team = () => {
                 </DialogHeader>
 
                 <div className="space-y-5 mt-2">
-                  {/* Radar Chart */}
+                  {/* Radar Chart with team average overlay */}
                   {hasAssessment && (
                     <div>
                       <h4 className="text-sm font-semibold mb-2">{t('teamSkillOverview')}</h4>
@@ -672,7 +677,32 @@ const Team = () => {
                             <PolarGrid stroke="hsl(var(--border))" />
                             <PolarAngleAxis dataKey="skill" tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} />
                             <PolarRadiusAxis angle={30} domain={[0, 4]} tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
+                            <Tooltip
+                              content={({ payload, label }) => {
+                                if (!payload?.length) return null;
+                                return (
+                                  <div className="rounded-lg border bg-background px-3 py-2 text-xs shadow-xl">
+                                    <p className="font-medium mb-1">{label}</p>
+                                    {payload.map((entry: any) => (
+                                      <div key={entry.dataKey} className="flex justify-between gap-4">
+                                        <span className="text-muted-foreground">{entry.name}</span>
+                                        <span className="font-mono font-medium">{entry.value}/4</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                );
+                              }}
+                            />
                             <Radar
+                              name={language === 'fr' ? 'Moyenne équipe' : 'Team Average'}
+                              dataKey="average"
+                              stroke="hsl(var(--muted-foreground))"
+                              fill="hsl(var(--muted-foreground))"
+                              fillOpacity={0.08}
+                              strokeDasharray="4 4"
+                            />
+                            <Radar
+                              name={selectedMember.name}
                               dataKey="value"
                               stroke="hsl(var(--primary))"
                               fill="hsl(var(--primary))"
@@ -680,6 +710,16 @@ const Team = () => {
                             />
                           </RadarChart>
                         </ResponsiveContainer>
+                      </div>
+                      <div className="flex items-center justify-center gap-6 mt-1 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1.5">
+                          <span className="inline-block w-3 h-0.5 rounded" style={{ borderTop: '2px dashed hsl(var(--muted-foreground))', height: 0, width: 12 }} />
+                          {language === 'fr' ? 'Moyenne équipe' : 'Team Average'}
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                          <span className="inline-block w-3 h-0.5 bg-primary rounded" />
+                          {selectedMember.name}
+                        </span>
                       </div>
                     </div>
                   )}
