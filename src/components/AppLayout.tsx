@@ -11,6 +11,7 @@ import {
   Globe,
   LogOut,
   Settings,
+  FileText,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useLanguage } from '@/i18n/LanguageContext';
@@ -115,6 +116,19 @@ export function AppLayout({ children }: { children: ReactNode }) {
                       <Settings className="h-4 w-4 shrink-0" />
                       <span>{language === 'fr' ? 'Paramètres' : 'Settings'}</span>
                     </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <a
+                      href="/manual.html"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-3 px-3 py-2 rounded-md text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
+                    >
+                      <FileText className="h-4 w-4 shrink-0" />
+                      <span>{language === 'fr' ? 'Manuel utilisateur' : 'User Manual'}</span>
+                    </a>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               </SidebarMenu>
