@@ -145,5 +145,5 @@ export function useTeamData() {
     };
   }, [user, fetchTeam]);
 
-  return { members, loading };
+  return { members, loading, refresh: fetchTeam };
 }
