@@ -21,6 +21,7 @@ export interface TeamMemberData {
   ratings: Record<string, Rating>;
   focusSkills: string[];
   actions: { total: number; completed: number; inProgress: number };
+  roles: string[];
 }
 
 function getInitials(name: string): string {
@@ -120,15 +121,19 @@ export function useTeamData(dateRange?: DateRange, isHR?: boolean) {
       assessmentsQuery = assessmentsQuery.lte('created_at', endOfDay.toISOString());
     }
 
-    const [profilesRes, assessmentsRes, plansRes] = await Promise.all([
+    const [profilesRes, assessmentsRes, plansRes, rolesRes] = await Promise.all([
       supabase.from('profiles').select('id, full_name, role, avatar_url, department, geography').in('id', memberIds),
       assessmentsQuery,
       supabase.from('development_plans').select('user_id, selected_skills, plans, updated_at').in('user_id', memberIds).order('updated_at', { ascending: false }),
+      isHR
+        ? supabase.from('user_roles').select('user_id, role').in('user_id', memberIds)
+        : Promise.resolve({ data: [] as { user_id: string; role: string }[] }),
     ]);
 
     const profiles = profilesRes.data || [];
     const assessments = assessmentsRes.data || [];
     const plans = plansRes.data || [];
+    const allRoles = rolesRes.data || [];
 
     const memberData: TeamMemberData[] = profiles.map(profile => {
       const latestAssessment = assessments.find(a => a.user_id === profile.id);
@@ -159,6 +164,7 @@ export function useTeamData(dateRange?: DateRange, isHR?: boolean) {
           completed: planActions.filter(a => a.status === 'completed').length,
           inProgress: planActions.filter(a => a.status === 'in_progress').length,
         },
+        roles: allRoles.filter(r => r.user_id === profile.id).map(r => r.role),
       };
     });
 
