@@ -1,5 +1,6 @@
-import { ReactNode } from 'react';
+import { ReactNode, useState, useEffect } from 'react';
 import { NotificationBell } from '@/components/NotificationBell';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -14,6 +15,7 @@ import {
 import { NavLink } from '@/components/NavLink';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { Language, languageNames } from '@/i18n/translations';
 import {
   Sidebar,
@@ -47,6 +49,19 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const { t, language, setLanguage } = useLanguage();
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from('profiles')
+      .select('avatar_url')
+      .eq('id', user.id)
+      .single()
+      .then(({ data }) => {
+        if (data?.avatar_url) setAvatarUrl(data.avatar_url);
+      });
+  }, [user]);
 
   const handleLogout = async () => {
     await signOut();
@@ -105,9 +120,22 @@ export function AppLayout({ children }: { children: ReactNode }) {
                 </SidebarMenuItem>
               </SidebarMenu>
               {user && (
-                <p className="text-xs text-sidebar-foreground/60 truncate px-1">
-                  {user.user_metadata?.full_name || user.email}
-                </p>
+                <div className="flex items-center gap-2 px-1">
+                  <Avatar className="h-7 w-7">
+                    {avatarUrl && <AvatarImage src={avatarUrl} alt={user.user_metadata?.full_name || 'User'} />}
+                    <AvatarFallback className="text-xs bg-sidebar-accent text-sidebar-foreground">
+                      {(user.user_metadata?.full_name || user.email || 'U')
+                        .split(' ')
+                        .map((w: string) => w[0])
+                        .join('')
+                        .toUpperCase()
+                        .slice(0, 2)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <p className="text-xs text-sidebar-foreground/60 truncate">
+                    {user.user_metadata?.full_name || user.email}
+                  </p>
+                </div>
               )}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

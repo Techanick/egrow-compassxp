@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
@@ -482,6 +482,7 @@ const Team = () => {
                             <TableCell>
                               <div className="flex items-center gap-3">
                                 <Avatar className="h-8 w-8">
+                                  {member.avatarUrl && <AvatarImage src={member.avatarUrl} alt={member.name} />}
                                   <AvatarFallback className="text-xs bg-primary/10 text-primary">{member.initials}</AvatarFallback>
                                 </Avatar>
                                 <div>
