@@ -126,9 +126,10 @@ export function NotificationBell() {
             variant="ghost"
             size="sm"
             className="w-full justify-start gap-2 text-xs text-muted-foreground"
-            onClick={() => { setOpen(false); navigate('/notifications/preferences'); }}
+            onClick={() => { setOpen(false); navigate('/settings'); }}
           >
             <Settings className="h-3.5 w-3.5" />
+            {/* Preferences link */}
             Preferences
           </Button>
         </div>
