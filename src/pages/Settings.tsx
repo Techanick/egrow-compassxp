@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -8,7 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Loader2, Settings, User, Bell, ClipboardCheck, Target, Save } from 'lucide-react';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Loader2, Settings, User, Bell, ClipboardCheck, Target, Save, Camera, Trash2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 interface Preferences {
@@ -19,22 +20,25 @@ interface Preferences {
 interface ProfileData {
   full_name: string;
   role: string;
+  avatar_url: string | null;
 }
 
 const SettingsPage = () => {
   const { language } = useLanguage();
   const { user } = useAuth();
-  const [profile, setProfile] = useState<ProfileData>({ full_name: '', role: '' });
+  const [profile, setProfile] = useState<ProfileData>({ full_name: '', role: '', avatar_url: null });
   const [prefs, setPrefs] = useState<Preferences>({ notify_assessment: true, notify_plan_update: true });
   const [loading, setLoading] = useState(true);
   const [savingProfile, setSavingProfile] = useState(false);
   const [savingPrefs, setSavingPrefs] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!user) return;
     (async () => {
       const [profileRes, prefsRes] = await Promise.all([
-        supabase.from('profiles').select('full_name, role').eq('id', user.id).maybeSingle(),
+        supabase.from('profiles').select('full_name, role, avatar_url').eq('id', user.id).maybeSingle(),
         supabase.from('notification_preferences').select('notify_assessment, notify_plan_update').eq('user_id', user.id).maybeSingle(),
       ]);
       if (profileRes.data) setProfile(profileRes.data);
@@ -56,6 +60,72 @@ const SettingsPage = () => {
     } else {
       toast({ title: language === 'fr' ? 'Profil mis à jour' : 'Profile updated' });
     }
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast({ title: 'Error', description: 'Please select an image file.', variant: 'destructive' });
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: 'Error', description: 'Image must be under 5MB.', variant: 'destructive' });
+      return;
+    }
+
+    setUploadingAvatar(true);
+    const ext = file.name.split('.').pop();
+    const filePath = `${user.id}/avatar.${ext}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('avatars')
+      .upload(filePath, file, { upsert: true });
+
+    if (uploadError) {
+      toast({ title: 'Error', description: uploadError.message, variant: 'destructive' });
+      setUploadingAvatar(false);
+      return;
+    }
+
+    const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(filePath);
+    const avatarUrl = `${urlData.publicUrl}?t=${Date.now()}`;
+
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({ avatar_url: avatarUrl, updated_at: new Date().toISOString() })
+      .eq('id', user.id);
+
+    setUploadingAvatar(false);
+    if (updateError) {
+      toast({ title: 'Error', description: updateError.message, variant: 'destructive' });
+    } else {
+      setProfile(p => ({ ...p, avatar_url: avatarUrl }));
+      toast({ title: language === 'fr' ? 'Photo mise à jour' : 'Avatar updated' });
+    }
+
+    // Reset file input
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleRemoveAvatar = async () => {
+    if (!user) return;
+    setUploadingAvatar(true);
+
+    // List and delete all files in user folder
+    const { data: files } = await supabase.storage.from('avatars').list(user.id);
+    if (files && files.length > 0) {
+      await supabase.storage.from('avatars').remove(files.map(f => `${user.id}/${f.name}`));
+    }
+
+    await supabase.from('profiles')
+      .update({ avatar_url: null, updated_at: new Date().toISOString() })
+      .eq('id', user.id);
+
+    setProfile(p => ({ ...p, avatar_url: null }));
+    setUploadingAvatar(false);
+    toast({ title: language === 'fr' ? 'Photo supprimée' : 'Avatar removed' });
   };
 
   const updatePref = async (key: keyof Preferences, value: boolean) => {
@@ -133,6 +203,63 @@ const SettingsPage = () => {
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
+          {/* Avatar Upload */}
+          <div className="flex items-center gap-4">
+            <div className="relative group">
+              <Avatar className="h-20 w-20">
+                {profile.avatar_url ? (
+                  <AvatarImage src={profile.avatar_url} alt="Profile" />
+                ) : null}
+                <AvatarFallback className="text-lg bg-primary/10 text-primary">
+                  {profile.full_name
+                    ? profile.full_name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
+                    : 'U'}
+                </AvatarFallback>
+              </Avatar>
+              {uploadingAvatar && (
+                <div className="absolute inset-0 flex items-center justify-center rounded-full bg-background/70">
+                  <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                </div>
+              )}
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm font-medium">{language === 'fr' ? 'Photo de profil' : 'Profile Picture'}</p>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadingAvatar}
+                >
+                  <Camera className="h-4 w-4 mr-1" />
+                  {language === 'fr' ? 'Changer' : 'Change'}
+                </Button>
+                {profile.avatar_url && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleRemoveAvatar}
+                    disabled={uploadingAvatar}
+                    className="text-muted-foreground hover:text-destructive"
+                  >
+                    <Trash2 className="h-4 w-4 mr-1" />
+                    {language === 'fr' ? 'Supprimer' : 'Remove'}
+                  </Button>
+                )}
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleAvatarUpload}
+              />
+              <p className="text-xs text-muted-foreground">
+                {language === 'fr' ? 'JPG, PNG. Max 5 Mo.' : 'JPG, PNG. Max 5MB.'}
+              </p>
+            </div>
+          </div>
+          <Separator />
           <div className="space-y-2">
             <Label htmlFor="email">{language === 'fr' ? 'E-mail' : 'Email'}</Label>
             <Input id="email" value={user?.email ?? ''} disabled className="bg-muted" />
