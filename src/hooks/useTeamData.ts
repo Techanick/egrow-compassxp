@@ -13,6 +13,7 @@ export interface TeamMemberData {
   name: string;
   initials: string;
   role: string;
+  avatarUrl: string | null;
   assessmentDate: string | null;
   skillLevels: Record<string, MasteryLevel | null>;
   focusSkills: string[];
@@ -101,7 +102,7 @@ export function useTeamData(dateRange?: DateRange) {
     }
 
     const [profilesRes, assessmentsRes, plansRes] = await Promise.all([
-      supabase.from('profiles').select('id, full_name, role').in('id', memberIds),
+      supabase.from('profiles').select('id, full_name, role, avatar_url').in('id', memberIds),
       assessmentsQuery,
       supabase.from('development_plans').select('user_id, selected_skills, plans, updated_at').in('user_id', memberIds).order('updated_at', { ascending: false }),
     ]);
@@ -127,6 +128,7 @@ export function useTeamData(dateRange?: DateRange) {
         name: profile.full_name || 'Unnamed',
         initials: getInitials(profile.full_name || 'U'),
         role: profile.role || 'manager',
+        avatarUrl: profile.avatar_url || null,
         assessmentDate: latestAssessment?.created_at?.split('T')[0] ?? null,
         skillLevels,
         focusSkills: planSkills,
