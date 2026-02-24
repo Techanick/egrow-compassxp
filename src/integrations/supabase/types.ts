@@ -120,7 +120,9 @@ export type Database = {
         Row: {
           avatar_url: string | null
           created_at: string
+          department: string | null
           full_name: string
+          geography: string | null
           id: string
           role: string
           updated_at: string
@@ -128,7 +130,9 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           created_at?: string
+          department?: string | null
           full_name?: string
+          geography?: string | null
           id: string
           role?: string
           updated_at?: string
@@ -136,7 +140,9 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           created_at?: string
+          department?: string | null
           full_name?: string
+          geography?: string | null
           id?: string
           role?: string
           updated_at?: string
@@ -194,6 +200,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_hr: { Args: { _user_id: string }; Returns: boolean }
       is_supervisor_of: {
         Args: { _member_id: string; _supervisor_id: string }
         Returns: boolean

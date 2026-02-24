@@ -9,8 +9,10 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Loader2, Settings, User, Bell, ClipboardCheck, Target, Save, Camera, Trash2 } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Loader2, Settings, User, Bell, ClipboardCheck, Target, Save, Camera, Trash2, Building2, Globe } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { departments, geographies, getDepartmentLabel, getGeoZoneLabel } from '@/data/organizationData';
 
 interface Preferences {
   notify_assessment: boolean;
@@ -21,12 +23,14 @@ interface ProfileData {
   full_name: string;
   role: string;
   avatar_url: string | null;
+  department: string | null;
+  geography: string | null;
 }
 
 const SettingsPage = () => {
   const { language } = useLanguage();
   const { user } = useAuth();
-  const [profile, setProfile] = useState<ProfileData>({ full_name: '', role: '', avatar_url: null });
+  const [profile, setProfile] = useState<ProfileData>({ full_name: '', role: '', avatar_url: null, department: null, geography: null });
   const [prefs, setPrefs] = useState<Preferences>({ notify_assessment: true, notify_plan_update: true });
   const [loading, setLoading] = useState(true);
   const [savingProfile, setSavingProfile] = useState(false);
@@ -38,10 +42,10 @@ const SettingsPage = () => {
     if (!user) return;
     (async () => {
       const [profileRes, prefsRes] = await Promise.all([
-        supabase.from('profiles').select('full_name, role, avatar_url').eq('id', user.id).maybeSingle(),
+        supabase.from('profiles').select('full_name, role, avatar_url, department, geography').eq('id', user.id).maybeSingle(),
         supabase.from('notification_preferences').select('notify_assessment, notify_plan_update').eq('user_id', user.id).maybeSingle(),
       ]);
-      if (profileRes.data) setProfile(profileRes.data);
+      if (profileRes.data) setProfile(profileRes.data as ProfileData);
       if (prefsRes.data) setPrefs(prefsRes.data);
       setLoading(false);
     })();
@@ -52,7 +56,13 @@ const SettingsPage = () => {
     setSavingProfile(true);
     const { error } = await supabase
       .from('profiles')
-      .update({ full_name: profile.full_name.trim(), role: profile.role.trim(), updated_at: new Date().toISOString() })
+      .update({
+        full_name: profile.full_name.trim(),
+        role: profile.role.trim(),
+        department: profile.department,
+        geography: profile.geography,
+        updated_at: new Date().toISOString(),
+      })
       .eq('id', user.id);
     setSavingProfile(false);
     if (error) {
@@ -65,7 +75,6 @@ const SettingsPage = () => {
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
-
     if (!file.type.startsWith('image/')) {
       toast({ title: 'Error', description: 'Please select an image file.', variant: 'destructive' });
       return;
@@ -74,29 +83,18 @@ const SettingsPage = () => {
       toast({ title: 'Error', description: 'Image must be under 5MB.', variant: 'destructive' });
       return;
     }
-
     setUploadingAvatar(true);
     const ext = file.name.split('.').pop();
     const filePath = `${user.id}/avatar.${ext}`;
-
-    const { error: uploadError } = await supabase.storage
-      .from('avatars')
-      .upload(filePath, file, { upsert: true });
-
+    const { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, file, { upsert: true });
     if (uploadError) {
       toast({ title: 'Error', description: uploadError.message, variant: 'destructive' });
       setUploadingAvatar(false);
       return;
     }
-
     const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(filePath);
     const avatarUrl = `${urlData.publicUrl}?t=${Date.now()}`;
-
-    const { error: updateError } = await supabase
-      .from('profiles')
-      .update({ avatar_url: avatarUrl, updated_at: new Date().toISOString() })
-      .eq('id', user.id);
-
+    const { error: updateError } = await supabase.from('profiles').update({ avatar_url: avatarUrl, updated_at: new Date().toISOString() }).eq('id', user.id);
     setUploadingAvatar(false);
     if (updateError) {
       toast({ title: 'Error', description: updateError.message, variant: 'destructive' });
@@ -104,25 +102,17 @@ const SettingsPage = () => {
       setProfile(p => ({ ...p, avatar_url: avatarUrl }));
       toast({ title: language === 'fr' ? 'Photo mise à jour' : 'Avatar updated' });
     }
-
-    // Reset file input
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const handleRemoveAvatar = async () => {
     if (!user) return;
     setUploadingAvatar(true);
-
-    // List and delete all files in user folder
     const { data: files } = await supabase.storage.from('avatars').list(user.id);
     if (files && files.length > 0) {
       await supabase.storage.from('avatars').remove(files.map(f => `${user.id}/${f.name}`));
     }
-
-    await supabase.from('profiles')
-      .update({ avatar_url: null, updated_at: new Date().toISOString() })
-      .eq('id', user.id);
-
+    await supabase.from('profiles').update({ avatar_url: null, updated_at: new Date().toISOString() }).eq('id', user.id);
     setProfile(p => ({ ...p, avatar_url: null }));
     setUploadingAvatar(false);
     toast({ title: language === 'fr' ? 'Photo supprimée' : 'Avatar removed' });
@@ -134,14 +124,9 @@ const SettingsPage = () => {
     const newPrefs = { ...prefs, [key]: value };
     const oldPrefs = { ...prefs };
     setPrefs(newPrefs);
-
     const { error } = await supabase
       .from('notification_preferences')
-      .upsert(
-        { user_id: user.id, ...newPrefs, updated_at: new Date().toISOString() },
-        { onConflict: 'user_id' }
-      );
-
+      .upsert({ user_id: user.id, ...newPrefs, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
     setSavingPrefs(false);
     if (error) {
       setPrefs(oldPrefs);
@@ -225,35 +210,18 @@ const SettingsPage = () => {
             <div className="space-y-1">
               <p className="text-sm font-medium">{language === 'fr' ? 'Photo de profil' : 'Profile Picture'}</p>
               <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploadingAvatar}
-                >
+                <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={uploadingAvatar}>
                   <Camera className="h-4 w-4 mr-1" />
                   {language === 'fr' ? 'Changer' : 'Change'}
                 </Button>
                 {profile.avatar_url && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleRemoveAvatar}
-                    disabled={uploadingAvatar}
-                    className="text-muted-foreground hover:text-destructive"
-                  >
+                  <Button variant="ghost" size="sm" onClick={handleRemoveAvatar} disabled={uploadingAvatar} className="text-muted-foreground hover:text-destructive">
                     <Trash2 className="h-4 w-4 mr-1" />
                     {language === 'fr' ? 'Supprimer' : 'Remove'}
                   </Button>
                 )}
               </div>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleAvatarUpload}
-              />
+              <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
               <p className="text-xs text-muted-foreground">
                 {language === 'fr' ? 'JPG, PNG. Max 5 Mo.' : 'JPG, PNG. Max 5MB.'}
               </p>
@@ -285,6 +253,55 @@ const SettingsPage = () => {
               placeholder={language === 'fr' ? 'Ex : Manager, Directeur...' : 'E.g. Manager, Director...'}
             />
           </div>
+
+          <Separator />
+
+          {/* Department & Geography */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label className="flex items-center gap-1.5">
+                <Building2 className="h-4 w-4 text-muted-foreground" />
+                {language === 'fr' ? 'Fonction' : 'Department'}
+              </Label>
+              <Select
+                value={profile.department ?? ''}
+                onValueChange={v => setProfile(p => ({ ...p, department: v || null }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={language === 'fr' ? 'Sélectionner...' : 'Select...'} />
+                </SelectTrigger>
+                <SelectContent>
+                  {departments.map(d => (
+                    <SelectItem key={d.id} value={d.id}>
+                      {d.label[language]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label className="flex items-center gap-1.5">
+                <Globe className="h-4 w-4 text-muted-foreground" />
+                {language === 'fr' ? 'Zone géographique' : 'Geography'}
+              </Label>
+              <Select
+                value={profile.geography ?? ''}
+                onValueChange={v => setProfile(p => ({ ...p, geography: v || null }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={language === 'fr' ? 'Sélectionner...' : 'Select...'} />
+                </SelectTrigger>
+                <SelectContent>
+                  {geographies.map(zone => (
+                    <SelectItem key={zone.id} value={zone.id}>
+                      {zone.label[language]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
           <Button onClick={handleSaveProfile} disabled={savingProfile} size="sm">
             {savingProfile ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
             {language === 'fr' ? 'Enregistrer' : 'Save'}

@@ -14,6 +14,8 @@ export interface TeamMemberData {
   initials: string;
   role: string;
   avatarUrl: string | null;
+  department: string | null;
+  geography: string | null;
   assessmentDate: string | null;
   skillLevels: Record<string, MasteryLevel | null>;
   ratings: Record<string, Rating>;
@@ -63,7 +65,7 @@ export interface DateRange {
   to: Date | undefined;
 }
 
-export function useTeamData(dateRange?: DateRange) {
+export function useTeamData(dateRange?: DateRange, isHR?: boolean) {
   const { user } = useAuth();
   const [members, setMembers] = useState<TeamMemberData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -72,18 +74,34 @@ export function useTeamData(dateRange?: DateRange) {
     if (!user) return;
     setLoading(true);
 
-    const { data: teamRels } = await supabase
-      .from('team_members')
-      .select('member_id')
-      .eq('supervisor_id', user.id);
+    let memberIds: string[];
 
-    if (!teamRels || teamRels.length === 0) {
+    if (isHR) {
+      // HR sees all profiles (RLS policy allows this)
+      const { data: allProfiles } = await supabase
+        .from('profiles')
+        .select('id')
+        .neq('id', user.id);
+      memberIds = (allProfiles || []).map(p => p.id);
+    } else {
+      const { data: teamRels } = await supabase
+        .from('team_members')
+        .select('member_id')
+        .eq('supervisor_id', user.id);
+
+      if (!teamRels || teamRels.length === 0) {
+        setMembers([]);
+        setLoading(false);
+        return;
+      }
+      memberIds = teamRels.map(r => r.member_id);
+    }
+
+    if (memberIds.length === 0) {
       setMembers([]);
       setLoading(false);
       return;
     }
-
-    const memberIds = teamRels.map(r => r.member_id);
 
     // Build assessments query with optional date filtering
     let assessmentsQuery = supabase
@@ -103,7 +121,7 @@ export function useTeamData(dateRange?: DateRange) {
     }
 
     const [profilesRes, assessmentsRes, plansRes] = await Promise.all([
-      supabase.from('profiles').select('id, full_name, role, avatar_url').in('id', memberIds),
+      supabase.from('profiles').select('id, full_name, role, avatar_url, department, geography').in('id', memberIds),
       assessmentsQuery,
       supabase.from('development_plans').select('user_id, selected_skills, plans, updated_at').in('user_id', memberIds).order('updated_at', { ascending: false }),
     ]);
@@ -130,6 +148,8 @@ export function useTeamData(dateRange?: DateRange) {
         initials: getInitials(profile.full_name || 'U'),
         role: profile.role || 'manager',
         avatarUrl: profile.avatar_url || null,
+        department: (profile as any).department || null,
+        geography: (profile as any).geography || null,
         assessmentDate: latestAssessment?.created_at?.split('T')[0] ?? null,
         skillLevels,
         ratings,
@@ -144,7 +164,7 @@ export function useTeamData(dateRange?: DateRange) {
 
     setMembers(memberData);
     setLoading(false);
-  }, [user, dateRange?.from?.getTime(), dateRange?.to?.getTime()]);
+  }, [user, isHR, dateRange?.from?.getTime(), dateRange?.to?.getTime()]);
 
   useEffect(() => {
     fetchTeam();
