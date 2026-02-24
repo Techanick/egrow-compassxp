@@ -1,9 +1,12 @@
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BookOpen, ClipboardCheck, Target } from 'lucide-react';
+import { BookOpen, ClipboardCheck, Target, Bell, CalendarClock, AlertCircle } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { skills } from '@/data/frameworkData';
+import { skills, getBehaviorsByLevel } from '@/data/frameworkData';
 import {
   RadarChart,
   PolarGrid,
@@ -13,16 +16,176 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 
+interface ReminderInfo {
+  type: 'assessment' | 'plan';
+  urgency: 'info' | 'warning' | 'urgent';
+  message: Record<string, string>;
+  actionLabel: Record<string, string>;
+  route: string;
+}
+
+function getDaysSince(dateStr: string | null): number | null {
+  if (!dateStr) return null;
+  const diff = Date.now() - new Date(dateStr).getTime();
+  return Math.floor(diff / (1000 * 60 * 60 * 24));
+}
+
+function buildReminders(
+  lastAssessment: string | null,
+  lastPlanUpdate: string | null,
+): ReminderInfo[] {
+  const reminders: ReminderInfo[] = [];
+  const assessDays = getDaysSince(lastAssessment);
+  const planDays = getDaysSince(lastPlanUpdate);
+
+  // Assessment reminders
+  if (assessDays === null) {
+    reminders.push({
+      type: 'assessment',
+      urgency: 'urgent',
+      message: {
+        en: "You haven't completed a self-assessment yet. Start one to track your management skills.",
+        fr: "Vous n'avez pas encore réalisé d'auto-évaluation. Commencez-en une pour suivre vos compétences.",
+      },
+      actionLabel: { en: 'Start Assessment', fr: 'Commencer' },
+      route: '/assessment',
+    });
+  } else if (assessDays > 270) {
+    reminders.push({
+      type: 'assessment',
+      urgency: 'urgent',
+      message: {
+        en: `Your last assessment was ${assessDays} days ago. It's time for your annual review.`,
+        fr: `Votre dernière évaluation date de ${assessDays} jours. Il est temps de faire votre bilan annuel.`,
+      },
+      actionLabel: { en: 'Update Assessment', fr: 'Mettre à jour' },
+      route: '/assessment',
+    });
+  } else if (assessDays > 90) {
+    reminders.push({
+      type: 'assessment',
+      urgency: 'warning',
+      message: {
+        en: `It's been ${assessDays} days since your last assessment. Consider a quarterly check-in.`,
+        fr: `Cela fait ${assessDays} jours depuis votre dernière évaluation. Pensez à un point trimestriel.`,
+      },
+      actionLabel: { en: 'Review Assessment', fr: 'Revoir' },
+      route: '/assessment',
+    });
+  }
+
+  // Plan reminders
+  if (lastAssessment && planDays === null) {
+    reminders.push({
+      type: 'plan',
+      urgency: 'warning',
+      message: {
+        en: "You've completed an assessment but haven't created a development plan yet.",
+        fr: "Vous avez terminé une évaluation mais n'avez pas encore créé de plan de développement.",
+      },
+      actionLabel: { en: 'Create Plan', fr: 'Créer un plan' },
+      route: '/plan',
+    });
+  } else if (planDays !== null && planDays > 30) {
+    reminders.push({
+      type: 'plan',
+      urgency: planDays > 90 ? 'urgent' : 'info',
+      message: {
+        en: `Your development plan was last updated ${planDays} days ago. Review your progress.`,
+        fr: `Votre plan de développement a été mis à jour il y a ${planDays} jours. Revoyez vos progrès.`,
+      },
+      actionLabel: { en: 'Update Plan', fr: 'Mettre à jour' },
+      route: '/plan',
+    });
+  }
+
+  return reminders;
+}
+
+const urgencyStyles = {
+  info: 'border-l-primary bg-primary/5',
+  warning: 'border-l-accent bg-accent/5',
+  urgent: 'border-l-destructive bg-destructive/5',
+};
+
+const urgencyIcons = {
+  info: CalendarClock,
+  warning: Bell,
+  urgent: AlertCircle,
+};
+
+const urgencyIconColors = {
+  info: 'text-primary',
+  warning: 'text-accent-foreground',
+  urgent: 'text-destructive',
+};
+
 const Dashboard = () => {
   const { t, language } = useLanguage();
+  const { user } = useAuth();
   const navigate = useNavigate();
+  const [reminders, setReminders] = useState<ReminderInfo[]>([]);
+  const [radarData, setRadarData] = useState<{ skill: string; level: number; fullMark: number }[]>([]);
 
-  // Mock data for radar chart — will be replaced with real assessment data
-  const radarData = skills.map((skill) => ({
-    skill: skill.name[language],
-    level: Math.floor(Math.random() * 4) + 1,
-    fullMark: 4,
-  }));
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchData = async () => {
+      const [assessRes, planRes] = await Promise.all([
+        supabase
+          .from('assessments')
+          .select('created_at')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(1),
+        supabase
+          .from('development_plans')
+          .select('updated_at')
+          .eq('user_id', user.id)
+          .order('updated_at', { ascending: false })
+          .limit(1),
+      ]);
+
+      const lastAssessment = assessRes.data?.[0]?.created_at ?? null;
+      const lastPlanUpdate = planRes.data?.[0]?.updated_at ?? null;
+
+      setReminders(buildReminders(lastAssessment, lastPlanUpdate));
+
+      // Build radar from real assessment data if available
+      if (lastAssessment) {
+        const { data: fullAssess } = await supabase
+          .from('assessments')
+          .select('ratings')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(1);
+
+        if (fullAssess?.[0]?.ratings) {
+          const ratings = fullAssess[0].ratings as Record<string, string>;
+          const data = skills.map(skill => {
+            // Compute highest validated level
+            const levels = ['fundamentals', 'intermediate', 'advanced', 'referent'] as const;
+            let highest = 0;
+            for (let i = 0; i < levels.length; i++) {
+              const behaviors = getBehaviorsByLevel(skill, levels[i]);
+              const qualifying = behaviors.filter(
+                (b: any) => ratings[b.id] === 'often' || ratings[b.id] === 'almost_always'
+              ).length;
+              if (qualifying >= 3) highest = i + 1;
+            }
+            return { skill: skill.name[language], level: highest, fullMark: 4 };
+          });
+          setRadarData(data);
+          return;
+        }
+      }
+
+      // Fallback: empty radar
+      setRadarData(skills.map(skill => ({ skill: skill.name[language], level: 0, fullMark: 4 })));
+    };
+
+    fetchData();
+  }, [user, language]);
 
   return (
     <div className="space-y-6 max-w-6xl">
@@ -40,6 +203,34 @@ const Dashboard = () => {
             : 'Your management development companion'}
         </p>
       </div>
+
+      {/* Periodic Reminders */}
+      {reminders.length > 0 && (
+        <div className="space-y-3">
+          {reminders.map((reminder, i) => {
+            const Icon = urgencyIcons[reminder.urgency];
+            return (
+              <Card
+                key={i}
+                className={`border-l-4 ${urgencyStyles[reminder.urgency]} cursor-pointer hover:shadow-md transition-shadow`}
+                onClick={() => navigate(reminder.route)}
+              >
+                <CardContent className="flex items-center justify-between gap-4 p-4">
+                  <div className="flex items-center gap-3">
+                    <Icon className={`h-5 w-5 shrink-0 ${urgencyIconColors[reminder.urgency]}`} />
+                    <p className="text-sm text-foreground">
+                      {reminder.message[language] || reminder.message.en}
+                    </p>
+                  </div>
+                  <Button size="sm" variant="outline" className="shrink-0">
+                    {reminder.actionLabel[language] || reminder.actionLabel.en}
+                  </Button>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
 
       {/* Quick Actions */}
       <div>
