@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import {
   RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar,
-  ResponsiveContainer,
+  ResponsiveContainer, Tooltip,
 } from 'recharts';
 import { Button } from '@/components/ui/button';
 import {
@@ -231,6 +231,22 @@ const Team = () => {
                   angle={30}
                   domain={[0, 4]}
                   tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
+                />
+                <Tooltip
+                  content={({ payload, label }) => {
+                    if (!payload?.length) return null;
+                    return (
+                      <div className="rounded-lg border bg-background px-3 py-2 text-xs shadow-xl">
+                        <p className="font-medium mb-1">{label}</p>
+                        {payload.map((entry: any) => (
+                          <div key={entry.dataKey} className="flex justify-between gap-4">
+                            <span className="text-muted-foreground">{entry.name}</span>
+                            <span className="font-mono font-medium">{entry.value}/4</span>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  }}
                 />
                 <Radar
                   name={language === 'fr' ? 'Moyenne équipe' : language === 'es' ? 'Promedio equipo' : 'Team Average'}
