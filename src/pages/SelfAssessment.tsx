@@ -1,5 +1,8 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useLanguage } from '@/i18n/LanguageContext';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -23,9 +26,29 @@ const VALIDATION_THRESHOLD = 3;
 
 const SelfAssessment = () => {
   const { t, language } = useLanguage();
+  const { user } = useAuth();
   const [currentSkillIndex, setCurrentSkillIndex] = useState(0);
   const [ratings, setRatings] = useState<Record<string, Rating>>({});
   const [showResults, setShowResults] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  // Load latest assessment from DB
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from('assessments')
+      .select('ratings')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .then(({ data }) => {
+        if (data && data.length > 0 && data[0].ratings) {
+          const loaded = data[0].ratings as Record<string, Rating>;
+          setRatings(loaded);
+          sessionStorage.setItem('assessment_ratings', JSON.stringify(loaded));
+        }
+      });
+  }, [user]);
 
   const currentSkill = skills[currentSkillIndex];
   const totalBehaviors = skills.reduce((sum, s) => sum + s.behaviors.length, 0);
@@ -298,7 +321,24 @@ const SelfAssessment = () => {
             <ChevronRight className="h-4 w-4 ml-1" />
           </Button>
         ) : (
-          <Button onClick={() => setShowResults(true)}>
+          <Button
+            disabled={saving}
+            onClick={async () => {
+              if (user) {
+                setSaving(true);
+                const { error } = await supabase.from('assessments').insert({
+                  user_id: user.id,
+                  ratings: ratings as any,
+                });
+                setSaving(false);
+                if (error) {
+                  toast({ title: 'Error saving', description: error.message, variant: 'destructive' });
+                  return;
+                }
+              }
+              setShowResults(true);
+            }}
+          >
             {t('submitAssessment')}
             <CheckCircle2 className="h-4 w-4 ml-1" />
           </Button>

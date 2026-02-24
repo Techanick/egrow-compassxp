@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   BookOpen,
@@ -7,9 +7,11 @@ import {
   Target,
   Users,
   Globe,
+  LogOut,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useLanguage } from '@/i18n/LanguageContext';
+import { useAuth } from '@/hooks/useAuth';
 import { Language, languageNames } from '@/i18n/translations';
 import {
   Sidebar,
@@ -41,7 +43,13 @@ const navItems = [
 
 export function AppLayout({ children }: { children: ReactNode }) {
   const { t, language, setLanguage } = useLanguage();
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
 
+  const handleLogout = async () => {
+    await signOut();
+    navigate('/auth');
+  };
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
@@ -78,26 +86,42 @@ export function AppLayout({ children }: { children: ReactNode }) {
               </SidebarGroupContent>
             </SidebarGroup>
           </SidebarContent>
-          <div className="mt-auto p-4 border-t border-sidebar-border">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="w-full justify-start gap-2 text-sidebar-foreground hover:bg-sidebar-accent">
-                  <Globe className="h-4 w-4" />
-                  <span>{languageNames[language]}</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start">
-                {(Object.keys(languageNames) as Language[]).map((lang) => (
-                  <DropdownMenuItem
-                    key={lang}
-                    onClick={() => setLanguage(lang)}
-                    className={lang === language ? 'bg-accent' : ''}
-                  >
-                    {languageNames[lang]}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+          <div className="mt-auto border-t border-sidebar-border">
+            <div className="p-4 space-y-2">
+              {user && (
+                <p className="text-xs text-sidebar-foreground/60 truncate px-1">
+                  {user.user_metadata?.full_name || user.email}
+                </p>
+              )}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="w-full justify-start gap-2 text-sidebar-foreground hover:bg-sidebar-accent">
+                    <Globe className="h-4 w-4" />
+                    <span>{languageNames[language]}</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                  {(Object.keys(languageNames) as Language[]).map((lang) => (
+                    <DropdownMenuItem
+                      key={lang}
+                      onClick={() => setLanguage(lang)}
+                      className={lang === language ? 'bg-accent' : ''}
+                    >
+                      {languageNames[lang]}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleLogout}
+                className="w-full justify-start gap-2 text-sidebar-foreground hover:bg-sidebar-accent"
+              >
+                <LogOut className="h-4 w-4" />
+                <span>{t('logout')}</span>
+              </Button>
+            </div>
           </div>
         </Sidebar>
 
