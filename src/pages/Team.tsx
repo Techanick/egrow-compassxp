@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/table';
 import {
   Users, TrendingUp, AlertTriangle, CheckCircle2, Clock, Eye,
-  BarChart3, UserCheck, Plus, Loader2, Trash2,
+  BarChart3, UserCheck, Plus, Loader2, Trash2, Download,
 } from 'lucide-react';
 import {
   RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar,
@@ -143,6 +143,54 @@ const Team = () => {
     }
   };
 
+  const handleExportCSV = () => {
+    if (members.length === 0) return;
+
+    const skillCols = skills.map(s => s.name[language]);
+    const headers = [
+      language === 'fr' ? 'Nom' : 'Name',
+      language === 'fr' ? 'Rôle' : 'Role',
+      language === 'fr' ? 'Date évaluation' : 'Assessment Date',
+      ...skillCols,
+      language === 'fr' ? 'Compétences prioritaires' : 'Focus Skills',
+      language === 'fr' ? 'Actions terminées' : 'Actions Completed',
+      language === 'fr' ? 'Actions totales' : 'Total Actions',
+    ];
+
+    const rows = members.map(m => {
+      const skillValues = skills.map(s => {
+        const level = m.skillLevels[s.id];
+        return level ? t(level) : '';
+      });
+      const focus = m.focusSkills
+        .map(sid => skills.find(s => s.id === sid)?.name[language] ?? '')
+        .filter(Boolean)
+        .join('; ');
+      return [
+        m.name,
+        m.role,
+        m.assessmentDate ?? '',
+        ...skillValues,
+        focus,
+        String(m.actions.completed),
+        String(m.actions.total),
+      ];
+    });
+
+    const escape = (v: string) => `"${v.replace(/"/g, '""')}"`;
+    const csv = [headers.map(escape).join(','), ...rows.map(r => r.map(escape).join(','))].join('\n');
+
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `team-skills-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+
+    toast({ title: language === 'fr' ? 'Export réussi' : 'Export complete' });
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -160,6 +208,12 @@ const Team = () => {
             <Users className="h-3.5 w-3.5" />
             {members.length} {t('directReports')}
           </Badge>
+          {members.length > 0 && (
+            <Button size="sm" variant="outline" onClick={handleExportCSV}>
+              <Download className="h-4 w-4 mr-1" />
+              {language === 'fr' ? 'Exporter CSV' : 'Export CSV'}
+            </Button>
+          )}
           <Button size="sm" onClick={() => setShowAddDialog(true)}>
             <Plus className="h-4 w-4 mr-1" />
             {language === 'fr' ? 'Ajouter' : 'Add Member'}
