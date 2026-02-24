@@ -53,7 +53,14 @@ const Team = () => {
   const [comparedMember, setComparedMember] = useState<TeamMemberData | null>(null);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [addEmail, setAddEmail] = useState('');
+  const [addEmailError, setAddEmailError] = useState('');
   const [addLoading, setAddLoading] = useState(false);
+
+  const validateEmail = (email: string) => {
+    if (!email.trim()) return '';
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email.trim()) ? '' : (language === 'fr' ? 'Adresse e-mail invalide' : 'Invalid email address');
+  };
 
   // Team-level aggregation
   const assessedMembers = members.filter(m => m.assessmentDate);
@@ -69,7 +76,11 @@ const Team = () => {
   const completedActions = members.reduce((s, m) => s + m.actions.completed, 0);
 
   const handleAddMember = async () => {
-    if (!user || !addEmail.trim()) return;
+    const emailErr = validateEmail(addEmail);
+    if (emailErr) {
+      setAddEmailError(emailErr);
+      return;
+    }
     setAddLoading(true);
 
     try {
@@ -598,14 +609,18 @@ const Team = () => {
               type="email"
               placeholder={language === 'fr' ? 'email@exemple.com' : 'email@example.com'}
               value={addEmail}
-              onChange={e => setAddEmail(e.target.value)}
+              onChange={e => { setAddEmail(e.target.value); setAddEmailError(validateEmail(e.target.value)); }}
+              className={addEmailError ? 'border-destructive' : ''}
             />
+            {addEmailError && (
+              <p className="text-xs text-destructive">{addEmailError}</p>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowAddDialog(false)}>
               {t('cancel')}
             </Button>
-            <Button onClick={handleAddMember} disabled={addLoading || !addEmail.trim()}>
+            <Button onClick={handleAddMember} disabled={addLoading || !addEmail.trim() || !!addEmailError}>
               {addLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               {language === 'fr' ? 'Ajouter' : 'Add'}
             </Button>
