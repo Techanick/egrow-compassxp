@@ -49,52 +49,56 @@ export const masteryLevelTextColors: Record<MasteryLevel, string> = {
 export const roles: Role[] = [
   {
     id: 'leader',
-    name: { en: 'Leader', fr: 'Leader', es: 'Líder', tr: 'Lider', zh: '领导者' },
+    name: { en: 'Leader', fr: 'Leader', es: 'Líder', tr: 'Lider', zh: '领导者', it: 'Leader' },
     description: {
       en: 'Inspires and guides teams toward a shared vision, fostering engagement and alignment.',
       fr: 'Inspire et guide les équipes vers une vision partagée, favorisant l\'engagement et l\'alignement.',
       es: 'Inspira y guía a los equipos hacia una visión compartida, fomentando el compromiso y la alineación.',
       tr: 'Ekipleri ortak bir vizyona doğru yönlendirir, bağlılık ve uyumu teşvik eder.',
       zh: '激励和引导团队朝着共同愿景前进，促进参与和协调。',
+      it: 'Ispira e guida i team verso una visione condivisa, promuovendo il coinvolgimento e l\'allineamento.',
     },
     icon: '🎯',
     skillIds: ['meaning', 'engagement'],
   },
   {
     id: 'coach',
-    name: { en: 'Coach', fr: 'Coach', es: 'Coach', tr: 'Koç', zh: '教练' },
+    name: { en: 'Coach', fr: 'Coach', es: 'Coach', tr: 'Koç', zh: '教练', it: 'Coach' },
     description: {
       en: 'Develops people through feedback, listening, and creating conditions for growth.',
       fr: 'Développe les personnes grâce au feedback, à l\'écoute et en créant les conditions de croissance.',
       es: 'Desarrolla a las personas a través de retroalimentación, escucha y creación de condiciones de crecimiento.',
       tr: 'Geri bildirim, dinleme ve büyüme koşulları oluşturarak insanları geliştirir.',
       zh: '通过反馈、倾听和创造成长条件来发展人才。',
+      it: 'Sviluppa le persone attraverso il feedback, l\'ascolto e la creazione di condizioni per la crescita.',
     },
     icon: '🌱',
     skillIds: ['feedback', 'active_listening'],
   },
   {
     id: 'entrepreneur',
-    name: { en: 'Entrepreneur', fr: 'Entrepreneur', es: 'Emprendedor', tr: 'Girişimci', zh: '企业家' },
+    name: { en: 'Entrepreneur', fr: 'Entrepreneur', es: 'Emprendedor', tr: 'Girişimci', zh: '企业家', it: 'Imprenditore' },
     description: {
       en: 'Drives performance, sets clear objectives, and manages resources effectively.',
       fr: 'Conduit la performance, fixe des objectifs clairs et gère les ressources efficacement.',
       es: 'Impulsa el rendimiento, establece objetivos claros y gestiona los recursos de manera eficaz.',
       tr: 'Performansı yönlendirir, net hedefler belirler ve kaynakları etkin yönetir.',
       zh: '推动绩效，设定明确目标，有效管理资源。',
+      it: 'Guida le prestazioni, fissa obiettivi chiari e gestisce le risorse in modo efficace.',
     },
     icon: '🚀',
     skillIds: ['objectives', 'decision_making'],
   },
   {
     id: 'communicator',
-    name: { en: 'Communicator', fr: 'Communicant', es: 'Comunicador', tr: 'İletişimci', zh: '沟通者' },
+    name: { en: 'Communicator', fr: 'Communicant', es: 'Comunicador', tr: 'İletişimci', zh: '沟通者', it: 'Comunicatore' },
     description: {
       en: 'Communicates clearly, builds trust, and fosters collaboration across the organization.',
       fr: 'Communique clairement, crée la confiance et favorise la collaboration dans l\'organisation.',
       es: 'Comunica con claridad, genera confianza y fomenta la colaboración en la organización.',
       tr: 'Açıkça iletişim kurar, güven oluşturur ve organizasyon genelinde iş birliğini teşvik eder.',
       zh: '清晰沟通，建立信任，促进组织内部协作。',
+      it: 'Comunica con chiarezza, costruisce fiducia e promuove la collaborazione nell\'organizzazione.',
     },
     icon: '💬',
     skillIds: ['communication', 'collaboration'],
@@ -110,6 +114,7 @@ export const skills: Skill[] = [
       es: 'Dar Sentido',
       tr: 'Anlam Vermek',
       zh: '赋予意义',
+      it: 'Dare Significato',
     },
     description: {
       en: 'Ability to articulate vision, connect team goals to company strategy, and inspire purpose.',
@@ -117,6 +122,7 @@ export const skills: Skill[] = [
       es: 'Capacidad de articular la visión, conectar los objetivos del equipo con la estrategia de la empresa e inspirar un propósito.',
       tr: 'Vizyonu ifade etme, ekip hedeflerini şirket stratejisine bağlama ve amaç ilham etme yeteneği.',
       zh: '阐述愿景、将团队目标与公司战略联系起来并激发使命感的能力。',
+      it: 'Capacità di articolare la visione, collegare gli obiettivi del team alla strategia aziendale e ispirare uno scopo.',
     },
     roleIds: ['leader'],
     behaviors: generateBehaviors('meaning', {
@@ -220,6 +226,7 @@ export const skills: Skill[] = [
       es: 'Generar Compromiso',
       tr: 'Bağlılık Oluşturmak',
       zh: '激发参与',
+      it: 'Generare Coinvolgimento',
     },
     description: {
       en: 'Creates conditions for motivation, autonomy, and team empowerment.',
@@ -227,6 +234,7 @@ export const skills: Skill[] = [
       es: 'Crea las condiciones para la motivación, la autonomía y el empoderamiento del equipo.',
       tr: 'Motivasyon, özerklik ve ekip güçlendirmesi için koşullar oluşturur.',
       zh: '为动力、自主性和团队赋权创造条件。',
+      it: 'Crea le condizioni per la motivazione, l\'autonomia e l\'empowerment del team.',
     },
     roleIds: ['leader'],
     behaviors: generateBehaviors('engagement', {
@@ -330,6 +338,7 @@ export const skills: Skill[] = [
       es: 'Dar y Recibir Retroalimentación',
       tr: 'Geri Bildirim Vermek & Almak',
       zh: '给予和接受反馈',
+      it: 'Dare e Ricevere Feedback',
     },
     description: {
       en: 'Provides constructive, timely feedback and receives it openly to foster continuous development.',
@@ -337,6 +346,7 @@ export const skills: Skill[] = [
       es: 'Proporciona retroalimentación constructiva y oportuna y la recibe abiertamente para fomentar el desarrollo continuo.',
       tr: 'Sürekli gelişimi teşvik etmek için yapıcı, zamanında geri bildirim verir ve açıkça alır.',
       zh: '提供建设性的、及时的反馈，并以开放态度接受反馈，以促进持续发展。',
+      it: 'Fornisce feedback costruttivo e tempestivo e lo riceve apertamente per favorire lo sviluppo continuo.',
     },
     roleIds: ['coach'],
     behaviors: generateBehaviors('feedback', {
@@ -440,6 +450,7 @@ export const skills: Skill[] = [
       es: 'Escucha Activa',
       tr: 'Aktif Dinleme',
       zh: '积极倾听',
+      it: 'Ascolto Attivo',
     },
     description: {
       en: 'Listens deeply, asks powerful questions, and creates space for others to express themselves.',
@@ -447,6 +458,7 @@ export const skills: Skill[] = [
       es: 'Escucha profundamente, hace preguntas poderosas y crea espacio para que otros se expresen.',
       tr: 'Derinlemesine dinler, güçlü sorular sorar ve başkalarının kendini ifade etmesi için alan oluşturur.',
       zh: '深入倾听，提出有力的问题，为他人创造表达空间。',
+      it: 'Ascolta in profondità, pone domande incisive e crea spazio per l\'espressione degli altri.',
     },
     roleIds: ['coach'],
     behaviors: generateBehaviors('active_listening', {
@@ -550,6 +562,7 @@ export const skills: Skill[] = [
       es: 'Establecer Objetivos y Gestionar el Rendimiento',
       tr: 'Hedef Belirleme ve Performans Yönetimi',
       zh: '设定目标与绩效管理',
+      it: 'Definire Obiettivi e Gestire le Prestazioni',
     },
     description: {
       en: 'Sets SMART objectives, monitors progress, and drives accountability for results.',
@@ -557,6 +570,7 @@ export const skills: Skill[] = [
       es: 'Establece objetivos SMART, monitorea el progreso e impulsa la responsabilidad por los resultados.',
       tr: 'SMART hedefler belirler, ilerlemeyi izler ve sonuçlar için hesap verebilirlik sağlar.',
       zh: '设定SMART目标，监控进度，推动结果责任制。',
+      it: 'Definisce obiettivi SMART, monitora i progressi e promuove la responsabilità sui risultati.',
     },
     roleIds: ['entrepreneur'],
     behaviors: generateBehaviors('objectives', {
@@ -660,6 +674,7 @@ export const skills: Skill[] = [
       es: 'Toma de Decisiones y Resolución de Problemas',
       tr: 'Karar Verme ve Problem Çözme',
       zh: '决策与问题解决',
+      it: 'Processo Decisionale e Risoluzione dei Problemi',
     },
     description: {
       en: 'Makes informed decisions, solves problems effectively, and manages complexity.',
@@ -667,6 +682,7 @@ export const skills: Skill[] = [
       es: 'Toma decisiones informadas, resuelve problemas eficazmente y gestiona la complejidad.',
       tr: 'Bilgilendirilmiş kararlar alır, sorunları etkili bir şekilde çözer ve karmaşıklığı yönetir.',
       zh: '做出知情决策，有效解决问题，管理复杂性。',
+      it: 'Prende decisioni informate, risolve i problemi efficacemente e gestisce la complessità.',
     },
     roleIds: ['entrepreneur'],
     behaviors: generateBehaviors('decision_making', {
@@ -767,10 +783,11 @@ export const skills: Skill[] = [
 // Helper to generate behaviors: 4 per level (fundamentals, intermediate, advanced, referent) = 16 total per skill
 function generateBehaviors(
   skillId: string,
-  descriptions: Record<Language, string[]>
+  descriptions: Partial<Record<Language, string[]>>
 ): Behavior[] {
   const levels: MasteryLevel[] = ['fundamentals', 'intermediate', 'advanced', 'referent'];
   const behaviors: Behavior[] = [];
+  const en = descriptions.en!;
 
   for (let i = 0; i < 16; i++) {
     const levelIndex = Math.floor(i / 4);
@@ -779,11 +796,12 @@ function generateBehaviors(
       id: `${skillId}_b${i + 1}`,
       level,
       description: {
-        en: descriptions.en[i],
-        fr: descriptions.fr[i],
-        es: descriptions.es[i],
-        tr: descriptions.tr[i],
-        zh: descriptions.zh[i],
+        en: en[i],
+        fr: (descriptions.fr ?? en)[i],
+        es: (descriptions.es ?? en)[i],
+        tr: (descriptions.tr ?? en)[i],
+        zh: (descriptions.zh ?? en)[i],
+        it: (descriptions.it ?? en)[i],
       },
     });
   }
@@ -801,6 +819,7 @@ export const developmentTools: DevTool[] = [
       es: 'Una herramienta psicométrica para comprender las preferencias personales, los estilos de comunicación y la dinámica de equipo usando un modelo de cuatro colores.',
       tr: 'Dört renk modeli kullanarak kişisel tercihleri, iletişim stillerini ve takım dinamiklerini anlamak için bir psikometrik araç.',
       zh: '一种心理测量工具，使用四色模型了解个人偏好、沟通风格和团队动力。',
+      it: 'Uno strumento psicometrico per comprendere preferenze personali, stili di comunicazione e dinamiche di team tramite un modello a quattro colori.',
     },
     format: 'Workshop / Individual profile',
     skillIds: ['engagement', 'active_listening'],
@@ -814,6 +833,7 @@ export const developmentTools: DevTool[] = [
       es: 'Marco para establecer objetivos Específicos, Medibles, Alcanzables, Relevantes y con Tiempo definido.',
       tr: 'Spesifik, Ölçülebilir, Ulaşılabilir, İlgili ve Zamana Bağlı hedefler belirlemek için çerçeve.',
       zh: '设定具体、可衡量、可实现、相关和有时限目标的框架。',
+      it: 'Framework per definire obiettivi Specifici, Misurabili, Raggiungibili, Rilevanti e Temporalmente definiti.',
     },
     format: 'Workshop / Individual exercise',
     skillIds: ['objectives'],
@@ -827,6 +847,7 @@ export const developmentTools: DevTool[] = [
       es: 'Un enfoque de comunicación basado en la observación, los sentimientos, las necesidades y las peticiones — fomentando la empatía y la claridad.',
       tr: 'Gözlem, duygular, ihtiyaçlar ve taleplere dayanan bir iletişim yaklaşımı — empati ve netliği teşvik eder.',
       zh: '基于观察、感受、需求和请求的沟通方法——促进同理心和清晰度。',
+      it: 'Un approccio comunicativo basato su osservazione, sentimenti, bisogni e richieste — promuovendo empatia e chiarezza.',
     },
     format: 'Training / Practice sessions',
     skillIds: ['feedback', 'active_listening'],
@@ -840,6 +861,7 @@ export const developmentTools: DevTool[] = [
       es: 'Una herramienta de autoevaluación que mide la asertividad en diferentes dimensiones de comunicación.',
       tr: 'Farklı iletişim boyutlarında atılganlığı ölçen bir öz değerlendirme aracı.',
       zh: '一种衡量不同沟通维度中自信程度的自我评估工具。',
+      it: 'Uno strumento di autovalutazione che misura l\'assertività nelle diverse dimensioni comunicative.',
     },
     format: 'Individual assessment',
     skillIds: ['feedback', 'meaning'],
@@ -853,6 +875,7 @@ export const developmentTools: DevTool[] = [
       es: 'Un enfoque estructurado de aprendizaje entre pares donde un grupo de gerentes se ayudan mutuamente a resolver desafíos reales a través de un proceso facilitado.',
       tr: 'Bir grup yöneticinin kolaylaştırılmış bir süreç aracılığıyla gerçek zorlukları çözmede birbirine yardım ettiği yapılandırılmış bir akran öğrenme yaklaşımı.',
       zh: '一种结构化的同伴学习方法，一组管理者通过引导过程互相帮助解决实际挑战。',
+      it: 'Un approccio strutturato di apprendimento tra pari in cui un gruppo di manager si aiutano reciprocamente a risolvere sfide reali attraverso un processo facilitato.',
     },
     format: 'Group sessions (6-8 people)',
     skillIds: ['decision_making', 'engagement'],
