@@ -97,6 +97,8 @@ const Team = () => {
   const { t, language } = useLanguage();
   const [selectedMember, setSelectedMember] = useState<MockMember | null>(null);
 
+  const [comparedMember, setComparedMember] = useState<MockMember | null>(null);
+
   // Team-level aggregation
   const assessedMembers = mockTeam.filter(m => m.assessmentDate);
   const skillAverages = skills.map(skill => {
@@ -179,14 +181,37 @@ const Team = () => {
       {/* Team Average Radar Chart */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">{t('teamSkillOverview')}</CardTitle>
-          <CardDescription>
-            {language === 'fr' ? 'Niveau moyen de maîtrise de l\'équipe par compétence' :
-             language === 'es' ? 'Nivel promedio de dominio del equipo por competencia' :
-             language === 'tr' ? 'Yetkinlik başına ortalama takım ustalık seviyesi' :
-             language === 'zh' ? '团队各技能平均掌握水平' :
-             'Team average mastery level per skill'}
-          </CardDescription>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <CardTitle className="text-lg">{t('teamSkillOverview')}</CardTitle>
+              <CardDescription>
+                {language === 'fr' ? 'Comparez un membre avec la moyenne de l\'équipe' :
+                 language === 'es' ? 'Compare un miembro con el promedio del equipo' :
+                 language === 'tr' ? 'Bir üyeyi takım ortalamasıyla karşılaştırın' :
+                 language === 'zh' ? '将成员与团队平均水平进行比较' :
+                 'Compare a member against the team average'}
+              </CardDescription>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              <Badge
+                variant={comparedMember === null ? 'default' : 'outline'}
+                className="cursor-pointer"
+                onClick={() => setComparedMember(null)}
+              >
+                {language === 'fr' ? 'Moyenne seule' : language === 'es' ? 'Solo promedio' : language === 'tr' ? 'Sadece ortalama' : language === 'zh' ? '仅平均' : 'Average only'}
+              </Badge>
+              {assessedMembers.map(m => (
+                <Badge
+                  key={m.id}
+                  variant={comparedMember?.id === m.id ? 'default' : 'outline'}
+                  className="cursor-pointer"
+                  onClick={() => setComparedMember(comparedMember?.id === m.id ? null : m)}
+                >
+                  {m.initials}
+                </Badge>
+              ))}
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="h-80">
@@ -194,6 +219,7 @@ const Team = () => {
               <RadarChart data={skillAverages.map(sa => ({
                 skill: sa.skill.name[language],
                 average: parseFloat(sa.avg.toFixed(2)),
+                member: comparedMember ? LEVEL_NUMERIC[comparedMember.skillLevels[sa.skill.id] ?? 'none'] : undefined,
                 fullMark: 4,
               }))}>
                 <PolarGrid stroke="hsl(var(--border))" />
@@ -207,15 +233,37 @@ const Team = () => {
                   tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
                 />
                 <Radar
-                  name="Team Average"
+                  name={language === 'fr' ? 'Moyenne équipe' : language === 'es' ? 'Promedio equipo' : 'Team Average'}
                   dataKey="average"
                   stroke="hsl(var(--primary))"
                   fill="hsl(var(--primary))"
-                  fillOpacity={0.2}
+                  fillOpacity={0.15}
                 />
+                {comparedMember && (
+                  <Radar
+                    name={comparedMember.name}
+                    dataKey="member"
+                    stroke="hsl(var(--accent-foreground))"
+                    fill="hsl(var(--accent))"
+                    fillOpacity={0.25}
+                    strokeDasharray="4 4"
+                  />
+                )}
               </RadarChart>
             </ResponsiveContainer>
           </div>
+          {comparedMember && (
+            <div className="flex items-center justify-center gap-6 mt-3 text-xs text-muted-foreground">
+              <span className="flex items-center gap-1.5">
+                <span className="inline-block w-3 h-0.5 bg-primary rounded" />
+                {language === 'fr' ? 'Moyenne équipe' : 'Team Average'}
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="inline-block w-3 h-0.5 bg-accent-foreground rounded border-dashed" style={{ borderTop: '2px dashed hsl(var(--accent-foreground))' , height: 0, width: 12 }} />
+                {comparedMember.name}
+              </span>
+            </div>
+          )}
         </CardContent>
       </Card>
 
