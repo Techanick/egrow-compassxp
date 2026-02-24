@@ -13,6 +13,10 @@ import {
   Users, TrendingUp, AlertTriangle, CheckCircle2, Clock, Eye,
   BarChart3, UserCheck,
 } from 'lucide-react';
+import {
+  RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar,
+  ResponsiveContainer,
+} from 'recharts';
 import { Button } from '@/components/ui/button';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
@@ -171,6 +175,49 @@ const Team = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Team Average Radar Chart */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">{t('teamSkillOverview')}</CardTitle>
+          <CardDescription>
+            {language === 'fr' ? 'Niveau moyen de maîtrise de l\'équipe par compétence' :
+             language === 'es' ? 'Nivel promedio de dominio del equipo por competencia' :
+             language === 'tr' ? 'Yetkinlik başına ortalama takım ustalık seviyesi' :
+             language === 'zh' ? '团队各技能平均掌握水平' :
+             'Team average mastery level per skill'}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <RadarChart data={skillAverages.map(sa => ({
+                skill: sa.skill.name[language],
+                average: parseFloat(sa.avg.toFixed(2)),
+                fullMark: 4,
+              }))}>
+                <PolarGrid stroke="hsl(var(--border))" />
+                <PolarAngleAxis
+                  dataKey="skill"
+                  tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                />
+                <PolarRadiusAxis
+                  angle={30}
+                  domain={[0, 4]}
+                  tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
+                />
+                <Radar
+                  name="Team Average"
+                  dataKey="average"
+                  stroke="hsl(var(--primary))"
+                  fill="hsl(var(--primary))"
+                  fillOpacity={0.2}
+                />
+              </RadarChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
 
       <Tabs defaultValue="members" className="space-y-4">
         <TabsList>
