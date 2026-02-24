@@ -72,37 +72,43 @@ const Team = () => {
     if (!user || !addEmail.trim()) return;
     setAddLoading(true);
 
-    // Look up profile by matching email from profiles
-    // We need to find the user by email - use an edge function or a lookup
-    // For now, we'll look up profiles table and try to find a match
-    const { data: profiles } = await supabase
-      .from('profiles')
-      .select('id, full_name');
+    try {
+      // Look up user by email via edge function
+      const { data, error: fnError } = await supabase.functions.invoke('lookup-user-by-email', {
+        body: { email: addEmail.trim() },
+      });
 
-    // Since we can't query auth.users directly, we'll insert by user ID
-    // For a better UX, let's search by the profile data we have access to
-    // Actually, the simplest approach: accept user ID directly or use email lookup via an RPC
+      if (fnError || !data?.id) {
+        const msg = data?.error || fnError?.message || 'User not found';
+        toast({ title: 'Error', description: msg, variant: 'destructive' });
+        setAddLoading(false);
+        return;
+      }
 
-    // Simple approach: try to find the user via their profile name or accept UUID
-    // Let's accept an email and look it up — but profiles don't store emails.
-    // Best approach: accept the member's user UUID for now
-    const memberId = addEmail.trim();
+      if (data.id === user.id) {
+        toast({ title: 'Error', description: 'You cannot add yourself as a team member.', variant: 'destructive' });
+        setAddLoading(false);
+        return;
+      }
 
-    const { error } = await supabase.from('team_members').insert({
-      supervisor_id: user.id,
-      member_id: memberId,
-    });
+      const { error } = await supabase.from('team_members').insert({
+        supervisor_id: user.id,
+        member_id: data.id,
+      });
+
+      if (error) {
+        toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      } else {
+        toast({ title: 'Member added', description: `${data.email} has been added to your team.` });
+        setShowAddDialog(false);
+        setAddEmail('');
+        window.location.reload();
+      }
+    } catch {
+      toast({ title: 'Error', description: 'Something went wrong.', variant: 'destructive' });
+    }
 
     setAddLoading(false);
-    if (error) {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
-    } else {
-      toast({ title: 'Member added', description: 'Team member has been added successfully.' });
-      setShowAddDialog(false);
-      setAddEmail('');
-      // Refresh page to reload team data
-      window.location.reload();
-    }
   };
 
   const handleRemoveMember = async (memberId: string) => {
@@ -585,11 +591,12 @@ const Team = () => {
           <div className="space-y-3">
             <p className="text-sm text-muted-foreground">
               {language === 'fr'
-                ? 'Entrez l\'identifiant utilisateur du collaborateur à ajouter.'
-                : 'Enter the user ID of the team member to add.'}
+                ? 'Entrez l\'adresse e-mail du collaborateur à ajouter.'
+                : 'Enter the email address of the team member to add.'}
             </p>
             <Input
-              placeholder={language === 'fr' ? 'ID utilisateur...' : 'User ID...'}
+              type="email"
+              placeholder={language === 'fr' ? 'email@exemple.com' : 'email@example.com'}
               value={addEmail}
               onChange={e => setAddEmail(e.target.value)}
             />
