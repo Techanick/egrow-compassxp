@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/hooks/useAuth';
 import { useTeamData, TeamMemberData, DateRange } from '@/hooks/useTeamData';
 import { supabase } from '@/integrations/supabase/client';
+import { departments, geographies, getDepartmentLabel, getGeoZoneLabel } from '@/data/organizationData';
 import { skills, masteryLevelColors, MasteryLevel, getBehaviorsByLevel } from '@/data/frameworkData';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -15,7 +16,7 @@ import {
 } from '@/components/ui/table';
 import {
   Users, TrendingUp, AlertTriangle, CheckCircle2, Clock, Eye,
-  BarChart3, UserCheck, Plus, Loader2, Trash2, Download, CalendarIcon, X, ChevronDown, ChevronRight,
+  BarChart3, UserCheck, Plus, Loader2, Trash2, Download, CalendarIcon, X, ChevronDown, ChevronRight, Building2, Globe,
 } from 'lucide-react';
 import {
   RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar,
@@ -34,6 +35,7 @@ import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const MASTERY_LEVELS: MasteryLevel[] = ['fundamentals', 'intermediate', 'advanced', 'referent'];
 const LEVEL_NUMERIC: Record<MasteryLevel | 'none', number> = {
@@ -56,8 +58,22 @@ const statusConfig = {
 const Team = () => {
   const { t, language } = useLanguage();
   const { user } = useAuth();
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
-  const { members, loading, refresh } = useTeamData(dateRange);
+
+  // Detect user role (HR gets global view)
+  useEffect(() => {
+    if (!user) return;
+    supabase.from('user_roles').select('role').eq('user_id', user.id).then(({ data }) => {
+      const roles = (data || []).map(r => r.role);
+      if (roles.includes('hr')) setUserRole('hr');
+      else if (roles.includes('admin')) setUserRole('admin');
+      else setUserRole('manager');
+    });
+  }, [user]);
+
+  const isHR = userRole === 'hr' || userRole === 'admin';
+  const { members, loading, refresh } = useTeamData(dateRange, isHR);
   const [selectedMember, setSelectedMember] = useState<TeamMemberData | null>(null);
   const [comparedMember, setComparedMember] = useState<TeamMemberData | null>(null);
   const [showAddDialog, setShowAddDialog] = useState(false);
@@ -66,6 +82,8 @@ const Team = () => {
   const [addLoading, setAddLoading] = useState(false);
   const [memberToRemove, setMemberToRemove] = useState<TeamMemberData | null>(null);
   const [expandedSkillId, setExpandedSkillId] = useState<string | null>(null);
+  const [filterDepartment, setFilterDepartment] = useState<string>('all');
+  const [filterGeography, setFilterGeography] = useState<string>('all');
 
   const validateEmail = (email: string) => {
     if (!email.trim()) return '';
@@ -73,8 +91,15 @@ const Team = () => {
     return emailRegex.test(email.trim()) ? '' : (language === 'fr' ? 'Adresse e-mail invalide' : 'Invalid email address');
   };
 
-  // Team-level aggregation
-  const assessedMembers = members.filter(m => m.assessmentDate);
+  // Apply department/geography filters
+  const filteredMembers = members.filter(m => {
+    if (filterDepartment !== 'all' && m.department !== filterDepartment) return false;
+    if (filterGeography !== 'all' && m.geography !== filterGeography) return false;
+    return true;
+  });
+
+  // Team-level aggregation (on filtered members)
+  const assessedMembers = filteredMembers.filter(m => m.assessmentDate);
   const skillAverages = skills.map(skill => {
     const values = assessedMembers.map(m => LEVEL_NUMERIC[m.skillLevels[skill.id] ?? 'none']).filter(v => v > 0);
     const avg = values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : 0;
@@ -83,8 +108,8 @@ const Team = () => {
   const strongest = [...skillAverages].sort((a, b) => b.avg - a.avg)[0];
   const weakest = [...skillAverages].sort((a, b) => a.avg - b.avg)[0];
 
-  const totalActions = members.reduce((s, m) => s + m.actions.total, 0);
-  const completedActions = members.reduce((s, m) => s + m.actions.completed, 0);
+  const totalActions = filteredMembers.reduce((s, m) => s + m.actions.total, 0);
+  const completedActions = filteredMembers.reduce((s, m) => s + m.actions.completed, 0);
 
   const handleAddMember = async () => {
     const emailErr = validateEmail(addEmail);
@@ -150,7 +175,7 @@ const Team = () => {
   };
 
   const handleExportCSV = () => {
-    if (members.length === 0) return;
+    if (filteredMembers.length === 0) return;
 
     const skillCols = skills.map(s => s.name[language]);
     const headers = [
@@ -163,7 +188,7 @@ const Team = () => {
       language === 'fr' ? 'Actions totales' : 'Total Actions',
     ];
 
-    const rows = members.map(m => {
+    const rows = filteredMembers.map(m => {
       const skillValues = skills.map(s => {
         const level = m.skillLevels[s.id];
         return level ? t(level) : '';
@@ -212,9 +237,9 @@ const Team = () => {
         <div className="flex items-center gap-2">
           <Badge variant="secondary" className="gap-1">
             <Users className="h-3.5 w-3.5" />
-            {members.length} {t('directReports')}
+            {filteredMembers.length} {t('directReports')}
           </Badge>
-          {members.length > 0 && (
+          {filteredMembers.length > 0 && (
             <Button size="sm" variant="outline" onClick={handleExportCSV}>
               <Download className="h-4 w-4 mr-1" />
               {language === 'fr' ? 'Exporter CSV' : 'Export CSV'}
@@ -227,7 +252,7 @@ const Team = () => {
         </div>
       </div>
 
-      {/* Date Range Filter */}
+      {/* Filters */}
       <div className="flex items-center gap-2 flex-wrap">
         <Popover>
           <PopoverTrigger asChild>
@@ -255,20 +280,47 @@ const Team = () => {
             />
           </PopoverContent>
         </Popover>
-        {(dateRange.from || dateRange.to) && (
+
+        <Select value={filterDepartment} onValueChange={setFilterDepartment}>
+          <SelectTrigger className="w-[180px] h-9 text-sm">
+            <Building2 className="h-4 w-4 mr-1.5 text-muted-foreground" />
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{language === 'fr' ? 'Toutes fonctions' : 'All departments'}</SelectItem>
+            {departments.map(d => (
+              <SelectItem key={d.id} value={d.id}>{d.label[language]}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select value={filterGeography} onValueChange={setFilterGeography}>
+          <SelectTrigger className="w-[180px] h-9 text-sm">
+            <Globe className="h-4 w-4 mr-1.5 text-muted-foreground" />
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{language === 'fr' ? 'Toutes zones' : 'All geographies'}</SelectItem>
+            {geographies.map(z => (
+              <SelectItem key={z.id} value={z.id}>{z.label[language]}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        {(dateRange.from || dateRange.to || filterDepartment !== 'all' || filterGeography !== 'all') && (
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setDateRange({ from: undefined, to: undefined })}
+            onClick={() => { setDateRange({ from: undefined, to: undefined }); setFilterDepartment('all'); setFilterGeography('all'); }}
             className="h-8 px-2 text-muted-foreground"
           >
             <X className="h-4 w-4 mr-1" />
-            {language === 'fr' ? 'Effacer' : 'Clear'}
+            {language === 'fr' ? 'Effacer les filtres' : 'Clear filters'}
           </Button>
         )}
       </div>
 
-      {members.length === 0 ? (
+      {filteredMembers.length === 0 ? (
         <Card>
           <CardContent className="pt-6 text-center space-y-4">
             <Users className="h-12 w-12 text-muted-foreground mx-auto" />
@@ -298,7 +350,7 @@ const Team = () => {
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">{t('lastAssessment')}</p>
-                    <p className="text-2xl font-bold">{assessedMembers.length}/{members.length}</p>
+                    <p className="text-2xl font-bold">{assessedMembers.length}/{filteredMembers.length}</p>
                   </div>
                 </div>
               </CardContent>
@@ -471,7 +523,7 @@ const Team = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {members.map(member => {
+                      {filteredMembers.map(member => {
                         const status = getDevStatus(member);
                         const StatusIcon = statusConfig[status].icon;
                         const bestLevel = Object.values(member.skillLevels).filter(Boolean).sort(
@@ -488,7 +540,11 @@ const Team = () => {
                                 </Avatar>
                                 <div>
                                   <p className="font-medium text-sm">{member.name}</p>
-                                  <p className="text-xs text-muted-foreground">{member.role}</p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {member.role}
+                                    {member.department && ` · ${getDepartmentLabel(member.department, language)}`}
+                                    {member.geography && ` · ${getGeoZoneLabel(member.geography, language)}`}
+                                  </p>
                                 </div>
                               </div>
                             </TableCell>
@@ -571,7 +627,7 @@ const Team = () => {
                 <CardContent>
                   <div className="space-y-6">
                     {skills.map(skill => {
-                      const memberLevels = members.map(m => ({
+                      const memberLevels = filteredMembers.map(m => ({
                         member: m,
                         level: m.skillLevels[skill.id],
                       }));
@@ -652,7 +708,11 @@ const Team = () => {
                     </Avatar>
                     <div>
                       <p className="text-xl">{selectedMember.name}</p>
-                      <p className="text-sm font-normal text-muted-foreground">{selectedMember.role}</p>
+                      <p className="text-sm font-normal text-muted-foreground">
+                        {selectedMember.role}
+                        {selectedMember.department && ` · ${getDepartmentLabel(selectedMember.department, language)}`}
+                        {selectedMember.geography && ` · ${getGeoZoneLabel(selectedMember.geography, language)}`}
+                      </p>
                       <div className="flex items-center gap-2 mt-1">
                         <Badge className={`gap-1 border-0 text-xs ${statusConfig[status].className}`}>
                           <StatusIcon className="h-3 w-3" />
