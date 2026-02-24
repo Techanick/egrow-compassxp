@@ -90,6 +90,20 @@ export function AppLayout({ children }: { children: ReactNode }) {
           </SidebarContent>
           <div className="mt-auto border-t border-sidebar-border">
             <div className="p-4 space-y-2">
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <NavLink
+                      to="/settings"
+                      className="flex items-center gap-3 px-3 py-2 rounded-md text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
+                      activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
+                    >
+                      <Settings className="h-4 w-4 shrink-0" />
+                      <span>{language === 'fr' ? 'Paramètres' : 'Settings'}</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
               {user && (
                 <p className="text-xs text-sidebar-foreground/60 truncate px-1">
                   {user.user_metadata?.full_name || user.email}
