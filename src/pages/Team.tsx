@@ -621,79 +621,144 @@ const Team = () => {
 
       {/* Member Detail Dialog */}
       <Dialog open={!!selectedMember} onOpenChange={() => setSelectedMember(null)}>
-        <DialogContent className="max-w-lg">
-          {selectedMember && (
-            <>
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-3">
-                  <Avatar>
-                    <AvatarFallback className="bg-primary/10 text-primary">{selectedMember.initials}</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p>{selectedMember.name}</p>
-                    <p className="text-sm font-normal text-muted-foreground">{selectedMember.role}</p>
-                  </div>
-                </DialogTitle>
-              </DialogHeader>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          {selectedMember && (() => {
+            const memberRadarData = skills.map(skill => ({
+              skill: skill.name[language],
+              value: LEVEL_NUMERIC[selectedMember.skillLevels[skill.id] ?? 'none'],
+              fullMark: 4,
+            }));
+            const hasAssessment = Object.values(selectedMember.skillLevels).some(Boolean);
+            const status = getDevStatus(selectedMember);
+            const StatusIcon = statusConfig[status].icon;
 
-              <div className="space-y-4 mt-2">
-                <div>
-                  <h4 className="text-sm font-semibold mb-2">{t('yourMasteryLevels')}</h4>
-                  <div className="space-y-2">
-                    {skills.map(skill => {
-                      const level = selectedMember.skillLevels[skill.id];
-                      return (
-                        <div key={skill.id} className="flex items-center justify-between text-sm">
-                          <span>{skill.name[language]}</span>
-                          {level ? (
-                            <Badge className={`${masteryLevelColors[level]} text-white border-0 text-xs`}>
-                              {t(level)}
-                            </Badge>
-                          ) : (
-                            <span className="text-muted-foreground text-xs">{t('noAssessment')}</span>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
+            return (
+              <>
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-4">
+                    <Avatar className="h-16 w-16">
+                      {selectedMember.avatarUrl && (
+                        <AvatarImage src={selectedMember.avatarUrl} alt={selectedMember.name} />
+                      )}
+                      <AvatarFallback className="bg-primary/10 text-primary text-xl">
+                        {selectedMember.initials}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="text-xl">{selectedMember.name}</p>
+                      <p className="text-sm font-normal text-muted-foreground">{selectedMember.role}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Badge className={`gap-1 border-0 text-xs ${statusConfig[status].className}`}>
+                          <StatusIcon className="h-3 w-3" />
+                          {t(status)}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {selectedMember.assessmentDate ?? t('noAssessment')}
+                        </span>
+                      </div>
+                    </div>
+                  </DialogTitle>
+                </DialogHeader>
 
-                {selectedMember.focusSkills.length > 0 && (
+                <div className="space-y-5 mt-2">
+                  {/* Radar Chart */}
+                  {hasAssessment && (
+                    <div>
+                      <h4 className="text-sm font-semibold mb-2">{t('teamSkillOverview')}</h4>
+                      <div className="h-56">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <RadarChart data={memberRadarData}>
+                            <PolarGrid stroke="hsl(var(--border))" />
+                            <PolarAngleAxis dataKey="skill" tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} />
+                            <PolarRadiusAxis angle={30} domain={[0, 4]} tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
+                            <Radar
+                              dataKey="value"
+                              stroke="hsl(var(--primary))"
+                              fill="hsl(var(--primary))"
+                              fillOpacity={0.2}
+                            />
+                          </RadarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Full Skill Breakdown */}
                   <div>
-                    <h4 className="text-sm font-semibold mb-2">{t('focusAreas')}</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {selectedMember.focusSkills.map(sid => {
-                        const sk = skills.find(s => s.id === sid);
-                        return sk ? (
-                          <Badge key={sid} variant="outline">{sk.name[language]}</Badge>
-                        ) : null;
+                    <h4 className="text-sm font-semibold mb-2">{t('yourMasteryLevels')}</h4>
+                    <div className="space-y-2">
+                      {skills.map(skill => {
+                        const level = selectedMember.skillLevels[skill.id];
+                        const numericValue = LEVEL_NUMERIC[level ?? 'none'];
+                        return (
+                          <div key={skill.id} className="space-y-1">
+                            <div className="flex items-center justify-between text-sm">
+                              <span>{skill.name[language]}</span>
+                              {level ? (
+                                <Badge className={`${masteryLevelColors[level]} text-white border-0 text-xs`}>
+                                  {t(level)}
+                                </Badge>
+                              ) : (
+                                <span className="text-muted-foreground text-xs">{t('noAssessment')}</span>
+                              )}
+                            </div>
+                            <Progress value={(numericValue / 4) * 100} className="h-1.5" />
+                          </div>
+                        );
                       })}
                     </div>
                   </div>
-                )}
 
-                {selectedMember.actions.total > 0 && (
+                  {/* Focus Skills */}
+                  {selectedMember.focusSkills.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-semibold mb-2">{t('focusAreas')}</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedMember.focusSkills.map(sid => {
+                          const sk = skills.find(s => s.id === sid);
+                          return sk ? (
+                            <Badge key={sid} variant="outline">{sk.name[language]}</Badge>
+                          ) : null;
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Development Plan Progress */}
                   <div>
                     <h4 className="text-sm font-semibold mb-2">{t('actionsProgress')}</h4>
-                    <Progress
-                      value={(selectedMember.actions.completed / selectedMember.actions.total) * 100}
-                      className="h-3 mb-1"
-                    />
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>{selectedMember.actions.completed} {t('completed').toLowerCase()}</span>
-                      <span>{selectedMember.actions.inProgress} {t('inProgress').toLowerCase()}</span>
-                      <span>{selectedMember.actions.total - selectedMember.actions.completed - selectedMember.actions.inProgress} {t('todo').toLowerCase()}</span>
-                    </div>
+                    {selectedMember.actions.total > 0 ? (
+                      <div className="space-y-2">
+                        <Progress
+                          value={(selectedMember.actions.completed / selectedMember.actions.total) * 100}
+                          className="h-3"
+                        />
+                        <div className="grid grid-cols-3 gap-2">
+                          <div className="text-center p-2 rounded-md bg-muted/50">
+                            <p className="text-lg font-bold text-foreground">
+                              {selectedMember.actions.total - selectedMember.actions.completed - selectedMember.actions.inProgress}
+                            </p>
+                            <p className="text-xs text-muted-foreground">{t('todo')}</p>
+                          </div>
+                          <div className="text-center p-2 rounded-md bg-muted/50">
+                            <p className="text-lg font-bold text-foreground">{selectedMember.actions.inProgress}</p>
+                            <p className="text-xs text-muted-foreground">{t('inProgress')}</p>
+                          </div>
+                          <div className="text-center p-2 rounded-md bg-muted/50">
+                            <p className="text-lg font-bold text-foreground">{selectedMember.actions.completed}</p>
+                            <p className="text-xs text-muted-foreground">{t('completed')}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground italic">{t('noActionsYet')}</p>
+                    )}
                   </div>
-                )}
-
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Clock className="h-3.5 w-3.5" />
-                  {t('lastAssessment')}: {selectedMember.assessmentDate ?? t('noAssessment')}
                 </div>
-              </div>
-            </>
-          )}
+              </>
+            );
+          })()}
         </DialogContent>
       </Dialog>
 
