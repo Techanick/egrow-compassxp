@@ -4,7 +4,7 @@ import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/hooks/useAuth';
 import { useTeamData, TeamMemberData, DateRange } from '@/hooks/useTeamData';
 import { supabase } from '@/integrations/supabase/client';
-import { skills, masteryLevelColors, MasteryLevel } from '@/data/frameworkData';
+import { skills, masteryLevelColors, MasteryLevel, getBehaviorsByLevel } from '@/data/frameworkData';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/table';
 import {
   Users, TrendingUp, AlertTriangle, CheckCircle2, Clock, Eye,
-  BarChart3, UserCheck, Plus, Loader2, Trash2, Download, CalendarIcon, X,
+  BarChart3, UserCheck, Plus, Loader2, Trash2, Download, CalendarIcon, X, ChevronDown, ChevronRight,
 } from 'lucide-react';
 import {
   RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar,
@@ -65,6 +65,7 @@ const Team = () => {
   const [addEmailError, setAddEmailError] = useState('');
   const [addLoading, setAddLoading] = useState(false);
   const [memberToRemove, setMemberToRemove] = useState<TeamMemberData | null>(null);
+  const [expandedSkillId, setExpandedSkillId] = useState<string | null>(null);
 
   const validateEmail = (email: string) => {
     if (!email.trim()) return '';
@@ -620,7 +621,7 @@ const Team = () => {
       )}
 
       {/* Member Detail Dialog */}
-      <Dialog open={!!selectedMember} onOpenChange={() => setSelectedMember(null)}>
+      <Dialog open={!!selectedMember} onOpenChange={() => { setSelectedMember(null); setExpandedSkillId(null); }}>
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           {selectedMember && (() => {
             const memberRadarData = skills.map(skill => {
@@ -727,14 +728,36 @@ const Team = () => {
                   {/* Full Skill Breakdown */}
                   <div>
                     <h4 className="text-sm font-semibold mb-2">{t('yourMasteryLevels')}</h4>
-                    <div className="space-y-2">
+                    <div className="space-y-1">
                       {skills.map(skill => {
                         const level = selectedMember.skillLevels[skill.id];
                         const numericValue = LEVEL_NUMERIC[level ?? 'none'];
+                        const isExpanded = expandedSkillId === skill.id;
+                        const ratingLabels: Record<string, string> = {
+                          hardly_ever: t('hardlyEver'),
+                          sometimes: t('sometimes'),
+                          often: t('often'),
+                          almost_always: t('almostAlways'),
+                        };
+                        const ratingColors: Record<string, string> = {
+                          hardly_ever: 'text-destructive',
+                          sometimes: 'text-muted-foreground',
+                          often: 'text-primary',
+                          almost_always: 'text-primary',
+                        };
+
                         return (
-                          <div key={skill.id} className="space-y-1">
-                            <div className="flex items-center justify-between text-sm">
-                              <span>{skill.name[language]}</span>
+                          <div key={skill.id} className="rounded-md border bg-card">
+                            <button
+                              type="button"
+                              className="w-full p-2.5 flex items-center gap-2 text-left hover:bg-muted/50 transition-colors rounded-md"
+                              onClick={() => setExpandedSkillId(isExpanded ? null : skill.id)}
+                            >
+                              {isExpanded
+                                ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                                : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                              }
+                              <span className="text-sm flex-1">{skill.name[language]}</span>
                               {level ? (
                                 <Badge className={`${masteryLevelColors[level]} text-white border-0 text-xs`}>
                                   {t(level)}
@@ -742,8 +765,41 @@ const Team = () => {
                               ) : (
                                 <span className="text-muted-foreground text-xs">{t('noAssessment')}</span>
                               )}
-                            </div>
-                            <Progress value={(numericValue / 4) * 100} className="h-1.5" />
+                            </button>
+                            {!isExpanded && (
+                              <div className="px-2.5 pb-2">
+                                <Progress value={(numericValue / 4) * 100} className="h-1.5" />
+                              </div>
+                            )}
+                            {isExpanded && (
+                              <div className="px-2.5 pb-2.5 space-y-3">
+                                <Progress value={(numericValue / 4) * 100} className="h-1.5" />
+                                {MASTERY_LEVELS.map(lvl => {
+                                  const behaviors = getBehaviorsByLevel(skill, lvl);
+                                  if (behaviors.length === 0) return null;
+                                  return (
+                                    <div key={lvl} className="space-y-1">
+                                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                                        {t(lvl)}
+                                      </p>
+                                      {behaviors.map(b => {
+                                        const rating = selectedMember.ratings[b.id];
+                                        return (
+                                          <div key={b.id} className="flex items-start justify-between gap-2 py-0.5">
+                                            <span className="text-xs text-foreground leading-snug flex-1">
+                                              {b.description[language]}
+                                            </span>
+                                            <span className={`text-xs font-medium whitespace-nowrap ${rating ? ratingColors[rating] : 'text-muted-foreground'}`}>
+                                              {rating ? ratingLabels[rating] : '—'}
+                                            </span>
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
                           </div>
                         );
                       })}
