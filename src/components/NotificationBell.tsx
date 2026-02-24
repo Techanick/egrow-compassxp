@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Bell } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Bell, Settings } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -22,6 +23,7 @@ export function NotificationBell() {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
 
   const fetchNotifications = async () => {
     if (!user) return;
@@ -119,6 +121,17 @@ export function NotificationBell() {
             ))
           )}
         </ScrollArea>
+        <div className="border-t px-4 py-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full justify-start gap-2 text-xs text-muted-foreground"
+            onClick={() => { setOpen(false); navigate('/notifications/preferences'); }}
+          >
+            <Settings className="h-3.5 w-3.5" />
+            Preferences
+          </Button>
+        </div>
       </PopoverContent>
     </Popover>
   );

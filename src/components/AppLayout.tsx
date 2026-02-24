@@ -9,6 +9,7 @@ import {
   Users,
   Globe,
   LogOut,
+  Settings,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useLanguage } from '@/i18n/LanguageContext';

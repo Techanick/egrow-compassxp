@@ -12,6 +12,7 @@ import FrameworkExplorer from "./pages/FrameworkExplorer";
 import SelfAssessment from "./pages/SelfAssessment";
 import DevelopmentPlan from "./pages/DevelopmentPlan";
 import Team from "./pages/Team";
+import NotificationPreferences from "./pages/NotificationPreferences";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
@@ -40,6 +41,7 @@ const App = () => (
                         <Route path="/assessment" element={<SelfAssessment />} />
                         <Route path="/plan" element={<DevelopmentPlan />} />
                         <Route path="/team" element={<Team />} />
+                        <Route path="/notifications/preferences" element={<NotificationPreferences />} />
                         <Route path="*" element={<NotFound />} />
                       </Routes>
                     </AppLayout>
