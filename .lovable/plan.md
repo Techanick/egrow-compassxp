@@ -1,5 +1,5 @@
 
-# Expanscience Management Framework Companion App
+# Management Framework Companion App
 
 ## Overview
 A multilingual (English, French, Spanish, Turkish, Chinese) professional development companion for Expanscience managers. The app digitizes the Management Framework document into an interactive tool with self-assessment, development planning, and progress tracking — integrated into the performance management cycle.
